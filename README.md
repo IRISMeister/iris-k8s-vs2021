@@ -48,7 +48,8 @@
     ```
 
     4.3 InterSystemsコンテナレジストリのクレデンシャル情報
-    
+
+    IKOを試される場合は、InterSystemsコンテナリポジトリへのクレデンシャルが必要です。  
     https://container.intersystems.com/　にWRCアカウントでログインしてください。
     使用したユーザ名、得られたDocker login passwordを下記と置き換えてください。(引用符不要)
 
@@ -60,7 +61,7 @@
 5. IKOのインストーラ(HELM chart)入手  
 公式ドキュメント  
 https://docs.intersystems.com/irislatest/csp/docbook/Doc.View.cls?KEY=AIKO  
-IKOを試される方は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。(より便利な入手方法を検討中です)  
+IKOを試される場合は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。(より便利な入手方法を検討中です)  
 Software Distribution -> Components下にあるInterSystems Kubernetes Operatorです。  
 解凍したtarのchartフォルダをgit cloneしたフォルダにコピーしてください。
     ```bash
@@ -94,7 +95,7 @@ Software Distribution -> Components下にあるInterSystems Kubernetes Operator�
 
 6. 評価ライセンスキーの入手  
 IKOは、Shard/ミラーを構成します。
-IKOを試される方は、ご面倒ですが、Shard及びミラーが有効な評価ライセンスキーをWRCから入手して./iris.keyと置き換えてください。
+IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効な評価ライセンスキーをWRCから入手して./iris.keyと置き換えてください。
 
 7. IRISパスワードの設定(任意)  
 この作業を行わない場合のパスワードはSYSです。
