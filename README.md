@@ -1,5 +1,3 @@
-# iris-k8s-vs2021
-
 # 事前作業
 事前作業を実施する環境として、Ubuntu20.04をご用意ください。
 1. az cli, kubectlのインストール  
@@ -38,6 +36,7 @@
     export subs=_azure_subscription_id_here_
     ```
     4.2 サービスプリンシパルの情報
+
     (事前作業 3.サービスプリンシパル作成)で取得したappId,passwordを下記と置き換えてください。(引用符不要)
 
     ```bash
@@ -49,6 +48,7 @@
     ```
 
     4.3 InterSystemsコンテナレジストリのクレデンシャル情報
+    
     https://container.intersystems.com/　にWRCアカウントでログインしてください。
     使用したユーザ名、得られたDocker login passwordを下記と置き換えてください。(引用符不要)
 
