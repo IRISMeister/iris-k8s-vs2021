@@ -1,3 +1,7 @@
+# 実行に際して
+StatefulSetを使用したデプロイは、Community版を使用しますので、どなたでも実行可能です。  
+InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効なWRCアカウントが必要となります。
+
 # 事前作業
 事前作業を実施する環境として、Ubuntu20.04をご用意ください。
 1. az cli, kubectlのインストール  
@@ -61,7 +65,7 @@
 5. IKOのインストーラ(HELM chart)入手  
 公式ドキュメント  
 https://docs.intersystems.com/irislatest/csp/docbook/Doc.View.cls?KEY=AIKO  
-IKOを試される場合は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。(より便利な入手方法を検討中です)  
+IKOを試される場合は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。(より自然な入手方法を検討中です)  
 Software Distribution -> Components下にあるInterSystems Kubernetes Operatorです。  
 解凍したtarのchartフォルダをgit cloneしたフォルダにコピーしてください。
     ```bash
@@ -94,7 +98,7 @@ Software Distribution -> Components下にあるInterSystems Kubernetes Operator�
     ```
 
 6. 評価ライセンスキーの入手  
-IKOは、Shard/ミラーを構成します。
+IKOは、Shard/ミラーを構成するため製品版のIRISとライセンスキーを使用します。
 IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効な評価ライセンスキーをWRCから入手して./iris.keyと置き換えてください。
 
 7. IRISパスワードの設定(任意)  

@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-iris
+  labels:
+    app: my-iris
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 52773
+    targetPort: 52773
+    protocol: TCP
+    name: http
+  selector:
+    app: my-iris
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: iris
+spec:
+  selector:
+    matchLabels:
+      app: my-iris # .spec.template.metadata.labelsの値と一致する必要があります
+  serviceName: "my-iris"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: my-iris # .spec.selector.matchLabelsの値と一致する必要があります
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: my-iris
+        image: containers.intersystems.com/intersystems/iris-community:2020.3.0.221.0
+        ports:
+        - containerPort: 1972
+        - containerPort: 52773
+        env:
+        - name: ISC_CPF_MERGE_FILE
+          value: /irissys/cpf/merge.cpf
+        - name: ISC_DATA_DIRECTORY
+          value: /DATA/IRIS
+        volumeMounts:
+        - mountPath: /irissys/cpf/
+          name: iris-cpf
+        - mountPath: /DATA
+          name: dbv
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: iris-merge-cpf
+        name: iris-cpf
+  volumeClaimTemplates:
+  - metadata:
+      name: dbv
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: iris-ssd-storageclass
+      resources:
+        requests:
+          storage: 100Gi

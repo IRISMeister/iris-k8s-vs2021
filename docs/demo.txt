@@ -1,0 +1,62 @@
+setup.txtの[3. AKSクラスタの作成]まで完了している事
+
+kubectl version
+kubectl get node
+watch kubectl get pod
+
+-------------------------------
+kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2020.3.0.221.0
+kubectl describe pod iris
+kubectl logs iris
+kubectl exec -ti iris -- iris session iris
+kubectl delete pod iris
+
+StatefulSet
+-------------------------------
+kubectl apply -f yaml/iris-ssd-sc-aks.yaml
+kubectl apply -f yaml/iris-configmap-cpf.yaml
+kubectl apply -f yaml/iris-statefulset.yml
+kubectl get svc
+  http://EXTERNAL:52773/csp/sys/%25CSP.Portal.Home.zen
+replicas: 1->2
+kubectl apply -f yaml/iris-statefulset.yml
+kubectl delete -f yaml/iris-statefulset.yml
+kubectl get pvc
+kubectl delete pvc dbv-iris-0
+kubectl delete pvc dbv-iris-1
+
+IKO
+-------------------------------
+shell/aks-prep-iris-cluster.sh
+kubectl apply -f yaml/iris-iko.yaml
+kubectl get statefulset -o wide
+kubectl get iriscluster   (runningを確認)
+
+kubectl get svc
+  http://EXTERNAL:52773/csp/sys/%25CSP.Portal.Home.zen
+  ミラーモニタ(プライマリのメンバ名がIRISMIRROR1Aであること)、シャード構成を確認
+kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISDM
+IRISDM> f i=1:1:1000 s ^a(i)=i
+
+kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISDM
+IRISDM> zw ^a
+IRISDM>s ^a=1
+
+S ^a=1
+^
+<PROTECT> ^a,/irissys/data/IRIS/mgr/irisdm/
+
+kubectl delete pod iris-vs2021-data-0-0
+(BackupがPrimaryに切り替わる)
+kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISDM
+IRISDM> s ^a=1
+
+(削除したpodは自動回復し、やがてBackupメンバで起動する)
+kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISDM
+IRISDM> s ^a=1
+S ^a=1
+^
+<PROTECT> ^a,/irissys/data/IRIS/mgr/irisdm/
+IRISDM>
+
+kubectl delete -f yaml/iris-iko.yaml

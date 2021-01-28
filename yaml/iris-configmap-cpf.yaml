@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  merge.cpf: |-
+    [Startup]
+    SystemMode=TEST
+    WebServer=1
+    PasswordHash=d8191b3c433ed48c7cd60cb7a4b1bfd3068b38db,t6jhs1sc
+
+    [config]
+    globals=0,0,32,0,0,0
+    routines=32
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: iris-merge-cpf
