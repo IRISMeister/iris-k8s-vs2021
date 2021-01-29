@@ -33,25 +33,16 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
 4. envs.shの編集  
 利用者に関するセンシティブな情報は全てshell/envs.shに格納しています。取り扱い注意です。
 
-    4.1 AzureのサブスクリプションID
-
-    使用するAzureのサブスクリプションIDを下記と置き換えてください。(引用符不要)
-    ```bash
-    export subs=_azure_subscription_id_here_
-    ```
-    4.2 サービスプリンシパルの情報
+    4.1 サービスプリンシパルの情報
 
     (事前作業 3.サービスプリンシパル作成)で取得したappId,passwordを下記と置き換えてください。(引用符不要)
 
     ```bash
-    -export appid=_azure_appid_here_
-    +export appid=xxxxxxxxxx
-
-    -export password=_azure_password_here_
-    +export password=yyyyyyyyyy
+    export appid=_azure_appid_here_
+    export password=_azure_password_here_
     ```
 
-    4.3 InterSystemsコンテナレジストリのクレデンシャル情報
+    4.2 InterSystemsコンテナレジストリのクレデンシャル情報
 
     IKOを試される場合は、InterSystemsコンテナリポジトリへのクレデンシャルが必要です。  
     https://container.intersystems.com/　にWRCアカウントでログインしてください。
