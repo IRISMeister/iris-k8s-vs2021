@@ -1,31 +1,30 @@
-setup.txtの[3. AKSクラスタの作成]まで完了している事
-
-kubectl version
-kubectl get node
-watch kubectl get pod
+README.mdの[AKSクラスタの作成]まで完了している事
 
 -------------------------------
-kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2022.1.0.209.0 -- "--check-caps false"
+kubectl create namespace iris-ns
+kubectl -n iris-ns run iris --image=containers.intersystems.com/intersystems/iris-community:2022.1.0.209.0 -- "--check-caps false"
 (2022.2以降はcheck-caps引数不要)
-kubectl describe pod iris
-kubectl logs iris
-kubectl exec -ti iris -- bash
-kubectl exec -ti iris -- iris session iris
-kubectl delete pod iris
+kubectl -n iris-ns describe pod iris
+kubectl -n iris-ns logs iris
+kubectl -n iris-ns exec -ti iris -- bash
+kubectl -n iris-ns exec -ti iris -- iris session iris
+kubectl -n iris-ns delete pod iris
 
 StatefulSet
 -------------------------------
 kubectl apply -f yaml/iris-ssd-sc-aks.yaml
 kubectl apply -f yaml/iris-configmap-cpf.yaml
 kubectl apply -f yaml/iris-statefulset.yml
+kubectl exec -ti iris-0 -- iris session iris
 kubectl get svc
-  http://EXTERNAL:52773/csp/sys/%25CSP.Portal.Home.zen
+  NAME      TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)           AGE
+  my-iris   LoadBalancer   10.0.239.90   20.188.20.225   52773:30699/TCP   16s
+  http://EXTERNAL-IP:52773/csp/sys/%25CSP.Portal.Home.zen
 replicas: 1->2
 kubectl apply -f yaml/iris-statefulset.yml
 kubectl delete -f yaml/iris-statefulset.yml
 kubectl get pvc
-kubectl delete pvc dbv-iris-0
-kubectl delete pvc dbv-iris-1
+kubectl delete pvc -l app=my-iris
 
 IKO
 -------------------------------

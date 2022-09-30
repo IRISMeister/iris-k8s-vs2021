@@ -114,17 +114,12 @@ Software Distribution -> Components下にあるInterSystems Kubernetes Operator�
     ```bash
     $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
     ```
-3. IKOのインストール  
 
-    ```bash
-    helm install intersystems chart/iris-operator --wait
-    ```
-
-4. 評価ライセンスキーの入手  
+3. 評価ライセンスキーの入手  
 IKOは、Shard/ミラーを構成するため製品版のIRISとライセンスキーを使用します。
 IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効なコンテナバージョン用のIRIS評価ライセンスキーを入手して[iris.key](iris.key)と置き換えてください。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
 
-5. IRISパスワードの設定(任意)  
+4. IRISパスワードの設定(任意)  
 この作業を行わない場合のパスワードはSYSですが、最初のログイン時にパスワード変更が強制されます。
 
     [common.cpf](cpf/common.cpf)にパスワードハッシュ値を反映します。  
@@ -138,7 +133,6 @@ IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効
 
 # VNET作成
 ```bash
-$ source shell/envs.sh
 $ az login
 $ shell/aks-create-subnet.sh
 ```
@@ -147,37 +141,47 @@ $ shell/aks-create-subnet.sh
 ```bash
 $ shell/aks-create-aks-cluster.sh
 ```
-(数分程度、時間がかかります)
+> 数分程度、時間がかかります
 
 ```bash
 $ kubectl get node
-NAME                                STATUS   ROLES   AGE   VERSION
-aks-nodepool1-12005123-vmss000000   Ready    agent   19m   v1.18.14
-aks-nodepool1-12005123-vmss000001   Ready    agent   19m   v1.18.14
-aks-nodepool1-12005123-vmss000002   Ready    agent   19m   v1.18.14
+NAME                                STATUS   ROLES   AGE     VERSION
+aks-nodepool1-35959336-vmss000000   Ready    agent   4m4s    v1.23.8
+aks-nodepool1-35959336-vmss000001   Ready    agent   3m35s   v1.23.8
+aks-nodepool1-35959336-vmss000002   Ready    agent   2m50s   v1.23.8
 ```
 
 # Demo内容
-docs/demo.txtを参照ください。
+[demo.txt](docs/demo.txt)を参照ください。
+
+IKOを試す場合は、事前に下記のコマンドでIKOをインストールしておいてください。
+
+```bash
+helm install intersystems chart/iris-operator --wait
+```
 
 # 削除
-
+## Demo開始前の状態に戻す
 (Demo内容)を初期状態から再実行するには、下記を実行してください。Demoで作成したリソースを全て削除します。
 ```bash
 shell/reset-to-next-demo.sh
 ```
-(イメージがK8s環境にpullされているので、初回に比べてPODの起動が早くなります)
+> 再度Demoの操作を行うと、イメージがK8s環境にpullされているので、初回に比べてPODの起動が早くなります。
 
+## AKSクラスタを完全に削除
 AKSクラスタを完全に削除するには下記を実行してください。
 ```bash
 source shell/envs.sh
 az group delete --name $aksrg --yes --no-wait
 az group delete --name $rg --yes --no-wait
 ```
-次回は、(VNET作成)から再実行できます。
 
 念のため、Azureのポータルで、下記のリソースグループが削除(もしくは内容が空)されていることを確認してください。
 ```bash
-iris-rg
-iris-aks-rg
+$ az group list --query "[?name=='iris-rg']"
+[]
+az group list --query "[?name=='iris-aks-rg']"
+[]
 ```
+
+次回は、「VNET作成」から再実行できます。

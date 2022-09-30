@@ -29,6 +29,8 @@ spec:
       labels:
         app: my-iris # .spec.selector.matchLabelsの値と一致する必要があります
     spec:
+      securityContext: 
+        fsGroup: 52773
       terminationGracePeriodSeconds: 10
       containers:
       - name: my-iris
@@ -61,4 +63,4 @@ spec:
       storageClassName: iris-ssd-storageclass
       resources:
         requests:
-          storage: 100Gi
+          storage: 10Gi
