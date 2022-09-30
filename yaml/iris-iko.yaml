@@ -19,14 +19,15 @@ spec:
         resources:
           requests:
             storage: 2Gi
+  updateStrategy:
+    type: RollingUpdate
+  serviceTemplate:
+    spec:
+      type: LoadBalancer
 
   topology:
     arbiter:
       image: containers.intersystems.com/intersystems/arbiter:2022.1.0.209.0
-      podTemplate:
-        spec:
-          imagePullSecrets:
-            - name: dockerhub-secret
       preferredZones:
         - japaneast-1
     data:
@@ -40,8 +41,6 @@ spec:
       preferredZones:
         - japaneast-2
         - japaneast-3
-      updateStrategy:
-        type: RollingUpdate
     compute:
       image: containers.intersystems.com/intersystems/iris:2022.1.0.209.0
       podTemplate:
@@ -49,12 +48,3 @@ spec:
           args: 
             - --check-caps false
       replicas: 2
-      preferredZones:
-        - japaneast-2
-        - japaneast-3
-    sam:
-      image: containers.intersystems.com/intersystems/sam:1.1.0.107
-
-  serviceTemplate:
-    spec:
-      type: LoadBalancer

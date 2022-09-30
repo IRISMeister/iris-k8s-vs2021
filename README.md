@@ -17,12 +17,7 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
     $ sudo az aks install-cli
     ```
 
-2. HELMのインストール  
-    ```bash
-    $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-    ```
-
-3. サービスプリンシパル作成  
+2. サービスプリンシパル作成  
 アプリケーション実行用のID(aks用のサービスプリンシパル)を作成します。出力値は取り扱い注意です。
 
     ```bash
@@ -37,8 +32,8 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
     }
     ```
 
-4. envs.shの編集  
-利用者に関するセンシティブな情報は全てshell/envs.shに格納しています。取り扱い注意です。
+3. envs.shの編集  
+利用者に関するセンシティブな情報は全てshell/envs.shに格納しています。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
 
     4.1 サービスプリンシパルの情報
 
@@ -60,8 +55,8 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
     export isccrpassword=_intersyetems_container_repo_token_here_
     ```
 
-5. IRISパスワードの設定(任意)  
-この作業を行わない場合のパスワードはSYSです。
+4. IRISパスワードの設定(任意)  
+この作業を行わない場合のパスワードはSYSですが、最初のログイン時にパスワード変更が強制されます。
 IRIS用のPassword Hashの作成及び定義への反映を行います。  
 公式ドキュメント  
 https://docs.intersystems.com/iris20201/csp/docbookj/Doc.View.cls?KEY=ADOCK#ADOCK_iris_images_password_auth
@@ -114,14 +109,25 @@ Software Distribution -> Components下にあるInterSystems Kubernetes Operator�
         │   └── validating-webhook.yaml
         └── values.yaml
     ```
+2. HELMのインストール  
 
-2. 評価ライセンスキーの入手  
+    ```bash
+    $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    ```
+3. IKOのインストール  
+
+    ```bash
+    helm install intersystems chart/iris-operator --wait
+    ```
+
+4. 評価ライセンスキーの入手  
 IKOは、Shard/ミラーを構成するため製品版のIRISとライセンスキーを使用します。
-IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効なコンテナバージョン用のIRIS評価ライセンスキーを入手して./iris.keyと置き換えてください。
+IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効なコンテナバージョン用のIRIS評価ライセンスキーを入手して[iris.key](iris.key)と置き換えてください。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
 
-3. IRISパスワードの設定(任意)
+5. IRISパスワードの設定(任意)  
+この作業を行わない場合のパスワードはSYSですが、最初のログイン時にパスワード変更が強制されます。
 
-    [compute.cpf](cpf/compute.cpf), [data.cpf](cpf/data.cpf)にパスワードハッシュ値を反映します。  
+    [common.cpf](cpf/common.cpf)にパスワードハッシュ値を反映します。  
 
     ```bash
     yaml/iris-iko.yaml
