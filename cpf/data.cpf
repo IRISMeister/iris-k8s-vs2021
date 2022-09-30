@@ -1,13 +1,3 @@
-[Startup]
-SystemMode=TEST
-WebServer=1
-
 [config]
-globals=0,0,32,0,0,0
+globals=0,0,64,0,0,0
 routines=64
-
-[SQL]
-TimePrecision=6
-
-[SqlSysDatatypes]
-TIMESTAMP=%Library.PosixTime

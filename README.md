@@ -3,10 +3,17 @@ StatefulSetを使用したデプロイは、Community版を使用しますので
 InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効なWRCアカウントが必要となります。
 
 # 事前作業
+## 事前作業
+
 事前作業を実施する環境として、Ubuntu20.04をご用意ください。
 1. az cli, kubectlのインストール  
+
+    az cli
     ```bash
     $ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    ```
+    kubectl
+    ```bash
     $ sudo az aks install-cli
     ```
 
@@ -16,7 +23,7 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
     ```
 
 3. サービスプリンシパル作成  
-アプリケーション実行用のID(aks用のサービスプリンシパル)を作成します。取り扱い注意です。
+アプリケーション実行用のID(aks用のサービスプリンシパル)を作成します。出力値は取り扱い注意です。
 
     ```bash
     $ az login   (ブラウザ経由での認証を実行)
@@ -53,46 +60,7 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
     export isccrpassword=_intersyetems_container_repo_token_here_
     ```
 
-5. IKOのインストーラ(HELM chart)入手  
-公式ドキュメント  
-https://docs.intersystems.com/irislatest/csp/docbook/Doc.View.cls?KEY=AIKO  
-IKOを試される場合は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。(より自然な入手方法を検討中です)  
-Software Distribution -> Components下にあるInterSystems Kubernetes Operatorです。  
-解凍したtarのchartフォルダをgit cloneしたフォルダにコピーしてください。
-    ```bash
-    $ tar -xvf iris_operator-2.0.0.223.0-unix.tar.gz
-    $ cp -r iris_operator-2.0.0.223.0/chart iris-k8s-vs2021/
-    ```
-    下記のような構造になるはずです。
-    ```bash
-    $ ls -R iris-k8s-vs2021/chart
-    iris-k8s-vs2021/chart:
-    iris-operator
-
-    iris-k8s-vs2021/chart/iris-operator:
-    Chart.yaml  README.md  templates  values.yaml
-
-    iris-k8s-vs2021/chart/iris-operator/templates:
-    apiregistration.yaml        deployment.yaml        service.yaml
-    appcatalog-user-roles.yaml  _helpers.tpl           user-roles.yaml
-    cleaner.yaml                mutating-webhook.yaml  validating-webhook.yaml
-    cluster-role-binding.yaml   NOTES.txt
-    cluster-role.yaml           service-account.yaml
-    $
-    ```
-
-    chart/iris-operator/values.yamlファイルを編集し、イメージレポジトリ名を修正します。
-
-    ```bash
-    -registry: intersystems
-    +registry: containers.intersystems.com/intersystems
-    ```
-
-6. 評価ライセンスキーの入手  
-IKOは、Shard/ミラーを構成するため製品版のIRISとライセンスキーを使用します。
-IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効な評価ライセンスキーをWRCから入手して./iris.keyと置き換えてください。
-
-7. IRISパスワードの設定(任意)  
+5. IRISパスワードの設定(任意)  
 この作業を行わない場合のパスワードはSYSです。
 IRIS用のPassword Hashの作成及び定義への反映を行います。  
 公式ドキュメント  
@@ -108,9 +76,54 @@ https://docs.intersystems.com/iris20201/csp/docbookj/Doc.View.cls?KEY=ADOCK#ADOC
     上記のように、出力が改行されずプロンプトとつながってしまうかもしれません。切れ目にご留意ください。
     必要なハッシュ値はe2ccf25a9b4bdff9bf7beae900d3a1f86d0f3176,o26ec72cです。
 
-    下記のファイルにここで得たハッシュ値を反映します。  
+    [iris-configmap-cpf.yaml](yaml/iris-configmap-cpf.yaml)にここで得たハッシュ値を反映します。  
+    
+## 事前作業(IKO使用時)
+IKO使用時は、上記に加えて下記の作業が必要になります。
+
+1. IKOのインストーラ(HELM chart)入手  
+公式ドキュメント  
+https://docs.intersystems.com/components/csp/docbook/DocBook.UI.Page.cls?KEY=AIKO  
+IKOを試される場合は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。(より自然な入手方法を検討中です)  
+Software Distribution -> Components下にあるInterSystems Kubernetes Operatorです。  
+解凍したtarのchartフォルダをgit cloneしたフォルダにコピーしてください。
     ```bash
-    yaml/iris-configmap-cpf.yaml
+    $ tar -xvf iris_operator-3.3.0.120-unix.tar.gz
+    $ cp -r iris_operator-3.3.0.120/chart iris-k8s-vs2021/
+    ```
+    下記のような構造になるはずです。
+    ```bash
+    $ tree chart/
+    chart/
+    └── iris-operator
+        ├── Chart.yaml
+        ├── README.md
+        ├── templates
+        │   ├── NOTES.txt
+        │   ├── _helpers.tpl
+        │   ├── apiregistration.yaml
+        │   ├── appcatalog-user-roles.yaml
+        │   ├── cleaner.yaml
+        │   ├── cluster-role-binding.yaml
+        │   ├── cluster-role.yaml
+        │   ├── deployment.yaml
+        │   ├── mutating-webhook.yaml
+        │   ├── service-account.yaml
+        │   ├── service.yaml
+        │   ├── user-roles.yaml
+        │   └── validating-webhook.yaml
+        └── values.yaml
+    ```
+
+2. 評価ライセンスキーの入手  
+IKOは、Shard/ミラーを構成するため製品版のIRISとライセンスキーを使用します。
+IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効なコンテナバージョン用のIRIS評価ライセンスキーを入手して./iris.keyと置き換えてください。
+
+3. IRISパスワードの設定(任意)
+
+    [compute.cpf](cpf/compute.cpf), [data.cpf](cpf/data.cpf)にパスワードハッシュ値を反映します。  
+
+    ```bash
     yaml/iris-iko.yaml
     ```
 

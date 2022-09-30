@@ -9,6 +9,7 @@ kubectl create secret docker-registry dockerhub-secret \
 --docker-username=$iscuser --docker-password=$isccrpassword
 
 # Config Mapとして、DATAノード用、COMPUTEノード用のIRIS構成ファイルを登録
+#kubectl create cm iris-cpf --from-file cpf/common.cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf
 kubectl create cm iris-cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf
 
 # Secretとして、製品版用のライセンスキーを登録

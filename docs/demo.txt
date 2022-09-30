@@ -5,9 +5,11 @@ kubectl get node
 watch kubectl get pod
 
 -------------------------------
-kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2020.3.0.221.0
+kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2022.1.0.209.0 -- "--check-caps false"
+(2022.2以降はcheck-caps引数不要)
 kubectl describe pod iris
 kubectl logs iris
+kubectl exec -ti iris -- bash
 kubectl exec -ti iris -- iris session iris
 kubectl delete pod iris
 
@@ -31,6 +33,25 @@ shell/aks-prep-iris-cluster.sh
 kubectl apply -f yaml/iris-iko.yaml
 kubectl get statefulset -o wide
 kubectl get iriscluster   (runningを確認)
+kubectl get pvc
+NAME                                  STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS            AGE
+iris-data-iris-vs2021-compute-0       Bound    pvc-fd8be715-e454-4271-baf4-983ee17b3fde   2Gi        RWO            iris-ssd-storageclass   2m7s
+iris-data-iris-vs2021-compute-1       Bound    pvc-fce2f4c4-fde4-4a16-b160-3e9712d096ca   2Gi        RWO            iris-ssd-storageclass   84s
+iris-data-iris-vs2021-data-0-0        Bound    pvc-75da02dd-ff9b-48e5-bff8-838b63bbf6ba   2Gi        RWO            iris-ssd-storageclass   17m
+iris-data-iris-vs2021-data-0-1        Bound    pvc-616372c2-48d4-46bc-9a86-c3fa4b277b27   2Gi        RWO            iris-ssd-storageclass   4m30s
+iris-journal1-iris-vs2021-compute-0   Bound    pvc-edeefb88-6aec-4921-97e7-86efbbf8f0cb   2Gi        RWO            iris-ssd-storageclass   2m7s
+iris-journal1-iris-vs2021-compute-1   Bound    pvc-c07eae02-cfde-4d59-8d27-25c681902d01   2Gi        RWO            iris-ssd-storageclass   84s
+iris-journal1-iris-vs2021-data-0-0    Bound    pvc-25bcddb6-95c9-4cd3-9792-c373a8881e91   2Gi        RWO            iris-ssd-storageclass   17m
+iris-journal1-iris-vs2021-data-0-1    Bound    pvc-ed3318fb-745b-43ed-9a1a-9d95284880c3   2Gi        RWO            iris-ssd-storageclass   4m30s
+iris-journal2-iris-vs2021-compute-0   Bound    pvc-5e67f42e-c8d0-471d-bdef-c21b78000a9a   2Gi        RWO            iris-ssd-storageclass   2m7s
+iris-journal2-iris-vs2021-compute-1   Bound    pvc-3af628e1-685f-41b0-8993-77af717c6dd2   2Gi        RWO            iris-ssd-storageclass   84s
+iris-journal2-iris-vs2021-data-0-0    Bound    pvc-11712c2f-01f1-4e96-bc2c-e687b6b5096e   2Gi        RWO            iris-ssd-storageclass   17m
+iris-journal2-iris-vs2021-data-0-1    Bound    pvc-dc3f4088-2759-4197-bf32-7d529ab3d19a   2Gi        RWO            iris-ssd-storageclass   4m30s
+iris-wij-iris-vs2021-compute-0        Bound    pvc-a463dcee-b603-480a-9fd7-471ad4680d53   2Gi        RWO            iris-ssd-storageclass   2m7s
+iris-wij-iris-vs2021-compute-1        Bound    pvc-291b0743-a549-469b-8d70-5bc892ac4e20   2Gi        RWO            iris-ssd-storageclass   84s
+iris-wij-iris-vs2021-data-0-0         Bound    pvc-87a5c894-66f8-48d6-86db-82f5cefbcb5c   2Gi        RWO            iris-ssd-storageclass   17m
+iris-wij-iris-vs2021-data-0-1         Bound    pvc-8cc2dd9c-3cd7-4cc6-85fe-d66c47ddba79   2Gi        RWO            iris-ssd-storageclass   4m30s
+
 
 kubectl get svc
   http://EXTERNAL:52773/csp/sys/%25CSP.Portal.Home.zen
@@ -60,3 +81,4 @@ S ^a=1
 IRISDM>
 
 kubectl delete -f yaml/iris-iko.yaml
+kubectl delete pvc --all

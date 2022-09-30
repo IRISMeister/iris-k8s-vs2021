@@ -1,9 +1,9 @@
 #!/bin/bash
 source shell/envs.sh
 
-subnetid=$(az network vnet subnet list --resource-group $rg --vnet-name $vnet --query [].id --output tsv)
+subnetid=$(az network vnet subnet show --resource-group $rg --vnet-name $vnet --name $subnet --query id -o tsv)
 
-# AKS用のRGを作成(なくても良いが一括削除するのに便利)
+# AKS用のRGを作成(なくても良いがaks関連だけを一括削除するのに便利)
 az group create --name $aksrg --location "japaneast"
 
 # AKSクラスタをデプロイ
