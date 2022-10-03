@@ -154,11 +154,9 @@ aks-nodepool1-35959336-vmss000002   Ready    agent   2m50s   v1.23.8
 # Demo内容
 [demo.txt](docs/demo.txt)を参照ください。
 
-IKOを試す場合は、事前に下記のコマンドでIKOをインストールしておいてください。
-
-```bash
-helm install intersystems chart/iris-operator --wait
-```
+IKOを利用したデプロイを[Lens](https://k8slens.dev/)で表示するとこのようになります。
+![lens1](docs/lens1.png)
+![lens2](docs/lens2.png)
 
 # 削除
 ## Demo開始前の状態に戻す
