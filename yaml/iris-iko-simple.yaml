@@ -27,13 +27,13 @@ spec:
 
   topology:
     arbiter:
-      image: containers.intersystems.com/intersystems/arbiter:2022.1.0.209.0
+      image: dpmeister/irisdemo:arbiter-2022.1.0.209.0
       preferredZones:
         - japaneast-1
     data:
       #shards: 1
       mirrored: true
-      image: containers.intersystems.com/intersystems/iris:2022.1.0.209.0
+      image: dpmeister/irisdemo:simple
       podTemplate:
         spec:
           args: 
@@ -42,7 +42,7 @@ spec:
         - japaneast-2
         - japaneast-3
     compute:
-      image: containers.intersystems.com/intersystems/iris:2022.1.0.209.0
+      image: dpmeister/irisdemo:iris-2022.1.0.209.0
       podTemplate:
         spec:
           args: 

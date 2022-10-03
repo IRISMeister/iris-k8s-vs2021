@@ -51,8 +51,8 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
     使用したユーザ名、得られたDocker login passwordを下記と置き換えてください。(引用符不要)
 
     ```bash
-    export iscuser=_intersyetems_container_repo_username_here_
-    export isccrpassword=_intersyetems_container_repo_token_here_
+    export cruser=_intersyetems_container_repo_username_here_
+    export crpassword=_intersyetems_container_repo_token_here_
     ```
 
 4. IRISパスワードの設定(任意)  

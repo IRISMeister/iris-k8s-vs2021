@@ -6,7 +6,7 @@ source shell/envs.sh
 # https://community.intersystems.com/post/introducing-intersystems-container-registry
 kubectl create secret docker-registry dockerhub-secret \
 --docker-server=https://containers.intersystems.com \
---docker-username=$iscuser --docker-password=$isccrpassword
+--docker-username=$cruser --docker-password=$crpassword
 
 # Config Mapとして、DATAノード用、COMPUTEノード用のIRIS構成ファイルを登録
 kubectl create cm iris-cpf --from-file cpf/common.cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf

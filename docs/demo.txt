@@ -67,34 +67,101 @@ kubectl get iriscluster   (runningを確認)
 kubectl get pvc
 kubectl get svc
   http://EXTERNAL:52773/csp/sys/%25CSP.Portal.Home.zen
-  ミラーモニタ(プライマリのメンバ名がIRISMIRROR1Aであること)、シャード構成を確認
-kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISDM
-IRISDM> f i=1:1:1000 s ^a(i)=i
+  ミラーモニタで、ミラー名がIRISMIRROR1であること、メンバIRIS-VS2021-DATA-0-0がプライマリであることを確認
 
-kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISDM
-IRISDM> zw ^a
-IRISDM>s ^a=1
+プライマリメンバ上で更新を実行
+kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISCLUSTER
+IRISCLUSTER>f i=1:1:1000 s ^a(i)=i
+IRISCLUSTER>h
+
+バックアップメンバ上で更新を実行
+kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISCLUSTER
+IRISCLUSTER>zw ^a
+  ・
+  ・
+^a(998)=998
+^a(999)=999
+^a(1000)=1000
+IRISCLUSTER>s ^a=1
 
 S ^a=1
 ^
-<PROTECT> ^a,/irissys/data/IRIS/mgr/irisdm/
+<PROTECT> ^a,/irissys/data/IRIS/mgr/iriscluster/
+IRISCLUSTER>h
+
+ECPクライアントからのアクセスを確認
+kubectl exec -ti iris-vs2021-compute-0 -- iris session iris -U IRISCLUSTER
+IRISCLUSTER>zw ^a
+  ・
+  ・
+^a(998)=998
+^a(999)=999
+^a(1000)=1000
+IRISCLUSTER>h
 
 kubectl delete pod iris-vs2021-data-0-0
 (BackupがPrimaryに切り替わる)
-kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISDM
-IRISDM> s ^a=1
+kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISCLUSTER
+IRISCLUSTER>s ^x=1
+IRISCLUSTER>h
 
 (削除したpodは自動回復し、やがてBackupメンバで起動する)
-kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISDM
-IRISDM> s ^a=1
-S ^a=1
+kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISCLUSTER
+IRISCLUSTER>s ^x=2
+S ^x=2
 ^
-<PROTECT> ^a,/irissys/data/IRIS/mgr/irisdm/
-IRISDM>
+<PROTECT> ^x,/irissys/data/IRIS/mgr/iriscluster/
+IRISCLUSTER>w ^x
+1
+IRISCLUSTER>h
 
+
+各IRISインスタンスの管理ポータルへのアクセス方法
+kubectl port-forward iris-vs2021-data-0-1 9999:52773
+kubectl port-forward iris-vs2021-compute-0 9999:52773
+
+IRISクラスタの削除
 kubectl delete -f yaml/iris-iko.yaml
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
-ミラーバックアップの管理ポータルへのアクセス方法
-kubectl port-forward iris-vs2021-data-0-1 9999:52773
+
+
+独自イメージのビルドおよびデプロイ
+
+独自イメージのビルド
+$ docker build ./build -t dpmeister/irisdemo:simple
+
+独自イメージ(data用)をプライベートレポにPush
+$ docker push dpmeister/irisdemo:simple
+
+IRISイメージ(compute用)をプライベートレポにPush
+$ docker tag containers.intersystems.com/intersystems/iris:2022.1.0.209.0 dpmeister/irisdemo:iris-2022.1.0.209.0
+(本来なら、有償のプライベートレポを契約し、dpmeister/iris:2022.1.0.209.0という名称でpushするべき)
+$ docker push dpmeister/irisdemo:iris-2022.1.0.209.0
+
+ArbiterイメージをプライベートレポにPush
+$ docker tag containers.intersystems.com/intersystems/arbiter:2022.1.0.209.0 dpmeister/irisdemo:arbiter-2022.1.0.209.0
+$ docker push dpmeister/irisdemo:arbiter-2022.1.0.209.0
+
+env.shの下記をプライベートレポジトリ用のクレデンシャルに変更
+export cruser="xxx"
+export crpassword="yyyyy"
+
+(InterSystems Container Repo用に作成した)コンテナレポジトリのクレデンシャルを作成しなおし
+kubectl delete secret dockerhub-secret
+source shell/envs.sh
+kubectl create secret docker-registry dockerhub-secret \
+--docker-username=""$cruser --docker-password=$crpassword
+
+構成ファイルを作成し
+cpf/data.cpfを修正。(data-simple.cpfで上書き)
+kubectl delete cm iris-cpf
+kubectl create cm iris-cpf --from-file cpf/common.cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf
+
+IKOでデプロイ
+kubectl apply -f yaml/iris-iko-simple.yaml
+
+まだ未完成
+ECP clientにリモートDB MYAPP-CODE, MYAPP-DATA2を追加. How?
+ECP clientにネームスペース(MYAPP-CODE, MYAPP-DATA2)を追加. How?
 
