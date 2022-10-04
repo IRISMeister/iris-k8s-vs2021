@@ -1,3 +1,10 @@
+[Startup]
+SystemMode=DATA
+
 [config]
 globals=0,0,64,0,0,0
 routines=64
+
+[Actions]
+CreateDatabase:Name=test,Directory=/irissys/data/IRIS/mgr/test,MirrorSetName=IRISMIRROR1,MirrorDBName=test
+CreateNamespace:Name=TEST,Globals=test,Routines=test

@@ -1,0 +1,11 @@
+[Startup]
+SystemMode=COMPUTE
+
+[config]
+globals=0,0,32,0,0,0
+routines=64
+
+[Actions]
+CreateDatabase:Name=myapp2-data,Directory=:mirror:IRISMIRROR1:MYAPP2-DATA,Server=IRIS-0,LogicalOnly=1
+CreateDatabase:Name=myapp-code,Directory=:ds:MYAPP-CODE,Server=IRIS-0,LogicalOnly=1
+CreateNamespace:Name=MYAPP,Globals=myapp2-data,Routines=myapp-code

@@ -6,9 +6,9 @@ spec:
   licenseKeySecret:
     name: iris-key-secret
   configSource:
-    name: iris-cpf
+    name: iris-cpf-userimage
   imagePullSecrets:
-    - name: dockerhub-secret
+    - name: dockerhub-secret-userimage
   storageClassName: iris-ssd-storageclass
   volumeClaimTemplates:
     - metadata:

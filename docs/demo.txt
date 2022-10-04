@@ -1,7 +1,6 @@
 README.mdの[AKSクラスタの作成]まで完了している事
 
-(オプショナル)
-Dashboard(k8sのUI)を表示
+(オプショナル) Dashboard(k8sのUI)を導入
 https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
 手順
 https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md
@@ -13,8 +12,7 @@ kubectl proxy
 open http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 
 
-(オプショナル)
-Lens 
+(オプショナル) Lensの導入 
 https://k8slens.dev/  
 WSL2環境の場合、https://backpackkevin.com/lens-ide-working-with-wsl-2/
 
@@ -27,8 +25,8 @@ helm repo update
 helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
 
 -------------------------------
+(オプショナル)デフォルトのネームスペースを指定
 kubectl create namespace iris-ns
-(オプション)デフォルトのネームスペースを指定
 kubectl config set-context $(kubectl config current-context) --namespace=iris-ns
 
 Pod
@@ -59,7 +57,7 @@ kubectl delete pvc -l app=my-iris
 
 IKO
 -------------------------------
-shell/aks-prep-iris-cluster.sh
+shell/prep-iris-cluster.sh
 helm install intersystems chart/iris-operator --wait
 kubectl apply -f yaml/iris-iko.yaml
 kubectl get statefulset -o wide
@@ -124,8 +122,10 @@ IRISクラスタの削除
 kubectl delete -f yaml/iris-iko.yaml
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
+IKOが実施したcpf mergeの内容を確認する方法
+kubectl describe cm iris-vs2021-data-0
 
-
+-------------------------------------------------
 独自イメージのビルドおよびデプロイ
 
 独自イメージのビルド
@@ -143,25 +143,28 @@ ArbiterイメージをプライベートレポにPush
 $ docker tag containers.intersystems.com/intersystems/arbiter:2022.1.0.209.0 dpmeister/irisdemo:arbiter-2022.1.0.209.0
 $ docker push dpmeister/irisdemo:arbiter-2022.1.0.209.0
 
-env.shの下記をプライベートレポジトリ用のクレデンシャルに変更
-export cruser="xxx"
-export crpassword="yyyyy"
-
-(InterSystems Container Repo用に作成した)コンテナレポジトリのクレデンシャルを作成しなおし
-kubectl delete secret dockerhub-secret
-source shell/envs.sh
-kubectl create secret docker-registry dockerhub-secret \
---docker-username=""$cruser --docker-password=$crpassword
-
-構成ファイルを作成し
-cpf/data.cpfを修正。(data-simple.cpfで上書き)
-kubectl delete cm iris-cpf
-kubectl create cm iris-cpf --from-file cpf/common.cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf
-
 IKOでデプロイ
-kubectl apply -f yaml/iris-iko-simple.yaml
+shell/prep-iris-cluster.sh
+helm install intersystems chart/iris-operator --wait
+kubectl apply -f yaml/iris-iko-userimage.yaml
 
-まだ未完成
-ECP clientにリモートDB MYAPP-CODE, MYAPP-DATA2を追加. How?
-ECP clientにネームスペース(MYAPP-CODE, MYAPP-DATA2)を追加. How?
+(プライマリの)DATAノードにてテーブルにデータをロードし、COMPUTEノードから参照可能であることを確認する
+$ kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U MYAPP
+MYAPP>w ##class(MyApp.Utils).LoadCSV()
+1
+MYAPP>d $SYSTEM.SQL.Shell()
+[SQL]MYAPP>>select * from person
 
+PID     name    born
+1       キアヌ・リーブス        1964
+2       キャリー＝アン・モス    1967
+    ・
+    ・
+6       ラナ・ウォシャウスキー  1965
+7       ジョエル・シルバー      1952
+---------------------------------------------------------------------------
+[SQL]MYAPP>>q
+
+$ kubectl exec -ti iris-vs2021-compute-0 -- iris session iris -U MYAPP
+MYAPP>d $SYSTEM.SQL.Shell()
+同じSQLを発行して同一の出力となることを確認する。
