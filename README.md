@@ -6,6 +6,12 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
 ## 事前作業
 
 事前作業を実施する環境として、Ubuntu20.04をご用意ください。
+0. Git クローン
+    ```bash
+    $ git clone https://github.com/IRISMeister/iris-k8s-vs2021.git
+    $ cd iris-k8s-vs2021
+    ```
+
 1. az cli, kubectlのインストール  
 
     az cli
@@ -33,11 +39,13 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
     ```
 
 3. envs.shの編集  
-利用者に関するセンシティブな情報は全てshell/envs.shに格納しています。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
+ 利用者に関するセンシティブな情報は全てshell/envs.shに格納します。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
 
     (事前作業 2.サービスプリンシパル作成)で取得したappId,passwordを下記と置き換えてください。
 
     ```bash
+    cp envs.sh.template envs.sh
+    vi envs.sh
     export appid=_azure_appid_here_
     export password=_azure_password_here_
     ```
@@ -122,7 +130,7 @@ Software Distribution -> Components下にあるInterSystems Kubernetes Operator�
 
 4. 評価ライセンスキーの入手  
 IKOは、Shard/ミラーを構成するため製品版のIRISとライセンスキーを使用します。
-IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効なコンテナバージョン用のIRIS評価ライセンスキーを入手して[iris.key](iris.key)と置き換えてください。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
+IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効なコンテナバージョン用のIRIS評価ライセンスキーを入手して、~/に配置してください。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
 
 5. IRISパスワードの設定 
 

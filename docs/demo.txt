@@ -128,12 +128,6 @@ kubectl describe cm iris-vs2021-data-0
 -------------------------------------------------
 独自イメージのビルドおよびデプロイ
 
-独自イメージのビルド
-$ docker build ./build -t dpmeister/irisdemo:simple
-
-独自イメージ(data用)をプライベートレポにPush
-$ docker push dpmeister/irisdemo:simple
-
 IRISイメージ(compute用)をプライベートレポにPush
 $ docker tag containers.intersystems.com/intersystems/iris:2022.1.0.209.0 dpmeister/irisdemo:iris-2022.1.0.209.0
 (本来なら、有償のプライベートレポを契約し、dpmeister/iris:2022.1.0.209.0という名称でpushするべき)
@@ -142,6 +136,13 @@ $ docker push dpmeister/irisdemo:iris-2022.1.0.209.0
 ArbiterイメージをプライベートレポにPush
 $ docker tag containers.intersystems.com/intersystems/arbiter:2022.1.0.209.0 dpmeister/irisdemo:arbiter-2022.1.0.209.0
 $ docker push dpmeister/irisdemo:arbiter-2022.1.0.209.0
+
+独自イメージのビルド
+$ docker build ./build -t dpmeister/irisdemo:simple
+
+独自イメージ(data用)をプライベートレポにPush
+$ docker push dpmeister/irisdemo:simple
+
 
 IKOでデプロイ
 shell/prep-iris-cluster.sh
