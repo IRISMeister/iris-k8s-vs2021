@@ -18,8 +18,6 @@ env:
   IMAGE_NAME: dpmeister/irisdemo
 
 jobs:
-  # Push image to GitHub Package Registry.
-  # See also https://docs.docker.com/docker-hub/builds/
   push:
     # Ensure test job passes before pushing image.
     needs: test
