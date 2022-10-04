@@ -25,11 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build image
-        run: docker build ./build --file build/Dockerfile --tag image
-
       - name: Log into registry
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build image
+        run: docker build ./build --file build/Dockerfile --tag image
 
       - name: Push image
         run: |
