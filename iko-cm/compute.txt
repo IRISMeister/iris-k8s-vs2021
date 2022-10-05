@@ -1,0 +1,54 @@
+Name:         iris-vs2021-compute
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+compute.cpf:
+----
+
+[Startup]
+DefaultPort=1972
+WebServerPort=52773
+[ECPServers]
+IRIS-0=iris-vs2021-data-0-0.iris-svc.default.svc.cluster.local,1972,1
+
+[Actions]
+ModifyService:Name=%service_ecp,Enabled=1
+CreateDatabase:Name=iriscluster,Directory=:mirror:IRISMIRROR1:IRISCLUSTER,Server=IRIS-0,LogicalOnly=1
+CreateNamespace:Name=IRISCLUSTER,Globals=iriscluster,Routines=iriscluster
+ModifyApplication:Name=/csp/broker,Path=/irissys/data/IRIS/mgr/../csp/broker
+
+
+
+[Journal]
+CurrentDirectory=/irissys/journal1/
+AlternateDirectory=/irissys/journal2/
+
+[config]
+wijdir=/irissys/wij/
+MaxServerConn=64
+MaxServers=64
+
+[Startup]
+PasswordHash=34e80d2f1ad5135679b3a57a9c4b1611a8a8995e0849ebe954ac1c16ad253d0274296985fea058a8aaf2a149b88082595e6374b3c2f7d5f0774f05e4311ba52d,124e81ee6bf17fcaf0dfb38a4f8a7f46e9e4b0c8c9a40864bb189d4d200b161b1451874efcbed63b801cbab592434b93037e90810d96e4ee123ac03b756779e9,10000,SHA512
+WebServer=1
+
+[Startup]
+SystemMode=COMPUTE
+
+[config]
+globals=0,0,32,0,0,0
+routines=64
+
+[Actions]
+CreateDatabase:Name=myapp2-data,Directory=:mirror:IRISMIRROR1:MYAPP2-DATA,Server=IRIS-0,LogicalOnly=1
+CreateDatabase:Name=myapp-code,Directory=:ds:MYAPP-CODE,Server=IRIS-0,LogicalOnly=1
+CreateNamespace:Name=MYAPP,Globals=myapp2-data,Routines=myapp-code
+
+
+BinaryData
+====
+
+Events:  <none>

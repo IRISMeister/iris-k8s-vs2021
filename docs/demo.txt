@@ -1,5 +1,7 @@
 README.mdの[AKSクラスタの作成]まで完了している事
 
+# オプショナル
+
 (オプショナル) Dashboard(k8sのUI)を導入
 https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
 手順
@@ -29,6 +31,8 @@ helm install prometheus-stack prometheus-community/kube-prometheus-stack -n moni
 kubectl create namespace iris-ns
 kubectl config set-context $(kubectl config current-context) --namespace=iris-ns
 
+# Pod起動
+
 Pod
 -------------------------------
 kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2022.1.0.209.0 -- "--check-caps false"
@@ -39,7 +43,8 @@ kubectl exec -ti iris -- bash
 kubectl exec -ti iris -- iris session iris
 kubectl delete pod iris
 
-StatefulSet
+
+# StatefulSet起動
 -------------------------------
 kubectl apply -f yaml/iris-ssd-sc-aks.yaml
 kubectl apply -f yaml/iris-configmap-cpf.yaml
@@ -55,7 +60,7 @@ kubectl delete -f yaml/iris-statefulset.yml
 kubectl get pvc
 kubectl delete pvc -l app=my-iris
 
-IKO
+# IKOによるデプロイ
 -------------------------------
 shell/prep-iris-cluster.sh
 helm install intersystems chart/iris-operator --wait
@@ -125,6 +130,7 @@ kubectl delete pvc -l intersystems.com/name=iris-vs2021
 IKOが実施したcpf mergeの内容を確認する方法
 kubectl describe cm iris-vs2021-data-0
 
+# IKOによる独自イメージのデプロイ
 -------------------------------------------------
 独自イメージのビルドおよびデプロイ
 
@@ -142,7 +148,6 @@ $ docker build ./build -t dpmeister/irisdemo:simple
 
 独自イメージ(data用)をプライベートレポにPush
 $ docker push dpmeister/irisdemo:simple
-
 
 IKOでデプロイ
 shell/prep-iris-cluster.sh

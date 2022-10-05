@@ -195,7 +195,8 @@ az group list --query "[?name=='iris-aks-rg']"
 # IKOの動作
 これを見れば、IKOが実際に何を行っているのかを知ることができます。
 ## IKOによるCPFの上書き設定内容
-下記コマンドで、IKOが実施したcpf mergeの内容を確認ことが出来ます。
+下記コマンドで、IKOが実施したcpf mergeの[内容](iko-cm/data-0.txt
+)を確認することが出来ます。
 ```bash
 $ kubectl describe cm iris-vs2021-data-0
 ```
