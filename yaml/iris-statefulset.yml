@@ -30,7 +30,7 @@ spec:
         app: my-iris # .spec.selector.matchLabelsの値と一致する必要があります
     spec:
       securityContext: 
-        fsGroup: 52773
+        fsGroup: 51773
       terminationGracePeriodSeconds: 10
       containers:
       - name: my-iris

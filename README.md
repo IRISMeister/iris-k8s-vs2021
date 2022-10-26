@@ -28,6 +28,8 @@ InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効�
 
     ```bash
     $ az login   (ブラウザ経由での認証を実行)
+    もしくは
+    $ az login --use-device-code  (複数のAzureのアカウントをブラウザで使い分けている方は、こちらのほうが便利)
     $ az ad sp create-for-rbac --skip-assignment
     {
     "appId": "xxxxxxxxxx",
