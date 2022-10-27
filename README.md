@@ -74,14 +74,15 @@ IKO使用時は、上記に加えて下記の作業が必要になります。
 
     1.1 InterSystemsコンテナレジストリのクレデンシャル情報
 
-    InterSystemsコンテナリポジトリへのクレデンシャルが必要です。  
+    IKOのコンテナイメージは一般公開されていません。そのため、取得(pull)にはInterSystemsコンテナリポジトリへのログインが必要です。  
     https://container.intersystems.com/　にWRCアカウントでログインしてください。
     使用したユーザ名、得られたDocker login passwordを下記と置き換えてください。
 
     ```bash
     export isccruser=_intersyetems_container_repo_username_here_
     export isccrpassword=_intersyetems_container_repo_token_here_
-    ```
+    ``` 
+    これらの環境変数は、kubectl create secret docker-registrを実行する際に使用されます。
 
     1.2 ユーザ作成のコンテナリポジトリのクレデンシャル情報
     (ユーザ作成のプライベートリポジトリ上にある)ユーザ作成のイメージを使用する場合は、下記でクレデンシャルを指定してください。
@@ -90,6 +91,7 @@ IKO使用時は、上記に加えて下記の作業が必要になります。
     export cruser="xxxxxx"
     export crpassword="yyyyyyyyy"
     ```
+    これらの環境変数は、kubectl create secret docker-registrを実行する際に使用されます。
 
 2. IKOのインストーラ(HELM chart)入手  
 公式ドキュメント  
