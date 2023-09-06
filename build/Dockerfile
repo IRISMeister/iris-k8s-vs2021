@@ -1,4 +1,4 @@
-FROM dpmeister/irisdemo:iris-2022.1.0.209.0
+FROM containers.intersystems.com/intersystems/iris:2023.2.0.227.0
 ARG COMMIT_ID="unknown"
 
 #USER root

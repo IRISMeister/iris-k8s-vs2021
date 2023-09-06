@@ -14,10 +14,10 @@ XData OpenAPI [ MimeType = application/json ]
   ],
   "basePath":"/csp/myapp",
   "paths":{
-    "/get":{
+    "/test":{
       "get":{
         "summary":"情報を取得する",
-        "operationId":"Get",
+        "operationId":"TestGet",
         "responses":{
           "200":{
             "description":"successful operation",
@@ -37,21 +37,27 @@ XData OpenAPI [ MimeType = application/json ]
             "description":"Unauthorized User"
           }
         }
-      }
-    },
-    "/history":{
-      "get":{
-        "summary":"履歴を取得する",
-        "operationId":"History",
+      },
+      "post":{
+        "summary":"情報を取得する",
+        "operationId":"TestPost",
         "responses":{
           "200":{
-            "description":"(Expected Result)",
+            "description":"successful operation",
             "schema":{
-              "type":"array",
-              "items":{
-                "$ref":"#/definitions/result"
+              "$ref":"#/definitions/result"
+            },
+            "examples":{
+              "application/json":{
+                "HostName":"myiris",
+                "UserName":"appuser",
+                "Status":"OK",
+                "TimeStamp":"09/30/2019 14:51:18"
               }
             }
+          },
+          "401":{
+            "description":"Unauthorized User"
           }
         }
       }

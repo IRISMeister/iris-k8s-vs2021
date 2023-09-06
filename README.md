@@ -1,61 +1,89 @@
+# 更新履歴
+2023/9 IRIS2023.2+IKO3.6にバージョンアップ。AKSクラスタ作成手順を簡素化。
+
 # 実行に際して
 StatefulSetを使用したデプロイは、Community版を使用しますので、どなたでも実行可能です。  
 InterSystems Kubernetes Operatorは製品版IRISを使用するため、有効なWRCアカウントが必要となります。
 
-# 事前作業
-## 事前作業
+以下のことを実行します。
+1. AKS クラスタの作成
+2. StatefulSetを使用したバニラIRISの起動
+3. IKOを使用したバニラIRISの起動
+4. IKOを使用したIRISベースの独自イメージの起動
 
-事前作業を実施する環境として、Ubuntu20.04をご用意ください。
-0. Git クローン
+# 事前作業
+## 事前作業(必須)
+
+事前作業を実施する環境として、azを実行可能なLinux環境をご用意ください。
+
+私は[こちらの手順](https://learn.microsoft.com/ja-jp/cli/azure/install-azure-cli-linux?pivots=apt)で、WSL2上のUbuntu22.04で実行しています。
+
+1. Git クローン
     ```bash
     $ git clone https://github.com/IRISMeister/iris-k8s-vs2021.git
     $ cd iris-k8s-vs2021
     ```
 
-1. az cli, kubectlのインストール  
+2. docker, az cli, kubectlのインストール  
 
-    az cli
-    ```bash
-    $ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
     ```
-    kubectl
-    ```bash
-    $ sudo az aks install-cli
+    $ docker version
+    Client: Docker Engine - Community
+    Version:           24.0.5
+    API version:       1.43
+    Go version:        go1.20.6
+    Git commit:        ced0996
+    Built:             Fri Jul 21 20:35:18 2023
+    OS/Arch:           linux/amd64
+    Context:           default
+
+    Server: Docker Engine - Community
+    Engine:
+    Version:          24.0.5
+    API version:      1.43 (minimum version 1.12)
+    Go version:       go1.20.6
+    Git commit:       a61e2b4
+    Built:            Fri Jul 21 20:35:18 2023
+    OS/Arch:          linux/amd64
+    Experimental:     false
+    containerd:
+    Version:          1.6.21
+    GitCommit:        3dce8eb055cbb6872793272b4f20ed16117344f8
+    runc:
+    Version:          1.1.7
+    GitCommit:        v1.1.7-0-g860f061
+    docker-init:
+    Version:          0.19.0
+    GitCommit:        de40ad0
     ```
 
-2. サービスプリンシパル作成  
-アプリケーション実行用のID(aks用のサービスプリンシパル)を作成します。出力値は取り扱い注意です。
-
-    ```bash
-    $ az login   (ブラウザ経由での認証を実行)
-    もしくは
-    $ az login --use-device-code  (複数のAzureのアカウントをブラウザで使い分けている方は、こちらのほうが便利)
-    $ az ad sp create-for-rbac --skip-assignment
+    ```
+    $ az version
     {
-    "appId": "xxxxxxxxxx",
-    "displayName": "azure-cli-2020-10-26-03-51-23",
-    "name": "http://azure-cli-2020-10-26-03-51-23",
-    "password": "yyyyyyyyyy",
-    "tenant": "zzzzzzzzzz"
+    "azure-cli": "2.51.0",
+    "azure-cli-core": "2.51.0",
+    "azure-cli-telemetry": "1.1.0",
+    "extensions": {}
     }
     ```
-
-3. envs.shの編集  
- 利用者に関するセンシティブな情報は全てshell/envs.shに格納します。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
-
-    (事前作業 2.サービスプリンシパル作成)で取得したappId,passwordを下記と置き換えてください。
+    [こちらの手順](https://learn.microsoft.com/ja-jp/cli/azure/install-azure-cli-linux?pivots=apt)を使用しました。
 
     ```bash
-    cp envs.sh.template envs.sh
-    vi envs.sh
-    export appid=_azure_appid_here_
-    export password=_azure_password_here_
+    $ sudo az aks install-cli 
+    $ kubectl version
+    Client Version: v1.28.1
+    Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
+    Server Version: v1.26.6
+    WARNING: version difference between client (1.28) and server (1.26) exceeds the supported minor version skew of +/-1
     ```
 
-4. IRISパスワードの設定
-IRIS用のPassword Hashの作成及び定義への反映を行います。  
-公式ドキュメント  
-https://docs.intersystems.com/iris20201/csp/docbookj/Doc.View.cls?KEY=ADOCK#ADOCK_iris_images_password_auth
+    > sudo を付けないとWindows用のEXEがインストールされてしまうようです
+
+3. IRISパスワードの設定
+
+    IRIS用のPassword Hashの作成及び定義への反映を行います。  
+
+    [公式ドキュメント](https://docs.intersystems.com/iris20201/csp/docbookj/Doc.View.cls?KEY=ADOCK#ADOCK_iris_images_password_auth)
 
     ```bash
     $ docker run --rm -it containers.intersystems.com/intersystems/passwordhash:1.1
@@ -68,45 +96,42 @@ https://docs.intersystems.com/iris20201/csp/docbookj/Doc.View.cls?KEY=ADOCK#ADOC
     初期設定されているハッシュ値はパスワードSYSを指定して作成したものです。
     
 ## 事前作業(IKO使用時)
-IKO使用時は、上記に加えて下記の作業が必要になります。
+IKOを使用する場合は、上記に加えて下記の作業が必要になります。
 
-1. envs.shの編集  
+1. コンテナイメージ取得用のクレデンシャル情報
 
-    1.1 InterSystemsコンテナレジストリのクレデンシャル情報
+    IKOを使う、使わないに限らず、コンテナイメージの取得にレポジトリへのログインが必要な場合、そのクレデンシャル情報をK8Sに伝える必要があります。ここではローカルでdocker loginした情報(~/.docker/config.json)を一括で使用する方法を採用します。
 
-    IKOのコンテナイメージは一般公開されていません。そのため、取得(pull)にはInterSystemsコンテナリポジトリへのログインが必要です。  
-    https://container.intersystems.com/　にWRCアカウントでログインしてください。
-    使用したユーザ名、得られたDocker login passwordを下記と置き換えてください。
+    > この情報は、[prep-iris-cluster.sh](shell/prep-iris-cluster.sh)で使用されます。
 
-    ```bash
-    export isccruser=_intersyetems_container_repo_username_here_
-    export isccrpassword=_intersyetems_container_repo_token_here_
-    ``` 
-    これらの環境変数は、kubectl create secret docker-registrを実行する際に使用されます。
+    製品版IRISおよびIKOのコンテナイメージの取得にはWRCアカウントへのログインが必要です。
 
-    1.2 ユーザ作成のコンテナリポジトリのクレデンシャル情報
-    (ユーザ作成のプライベートリポジトリ上にある)ユーザ作成のイメージを使用する場合は、下記でクレデンシャルを指定してください。
+    https://container.intersystems.com/ にWRCアカウントでログインしてください。
+    
+    ![icr](docs/icr.png)
 
-    ```bash
-    export cruser="xxxxxx"
-    export crpassword="yyyyyyyyy"
-    ```
-    これらの環境変数は、kubectl create secret docker-registrを実行する際に使用されます。
+    得られたDocker loginコマンドをローカルで実行してください。
 
 2. IKOのインストーラ(HELM chart)入手  
-公式ドキュメント  
-https://docs.intersystems.com/components/csp/docbook/DocBook.UI.Page.cls?KEY=AIKO  
-IKOを試される場合は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。(より自然な入手方法を検討中です)  
-Software Distribution -> Components下にあるInterSystems Kubernetes Operatorです。  
-解凍したtarのchartフォルダをgit cloneしたフォルダにコピーしてください。
-    ```bash
-    $ tar -xvf iris_operator-3.3.0.120-unix.tar.gz
-    $ cp -r iris_operator-3.3.0.120/chart iris-k8s-vs2021/
+
+    [公式ドキュメント](https://docs.intersystems.com/components/csp/docbook/DocBook.UI.Page.cls?KEY=AIKO#AIKO_archive)
+
+    IKOを試される場合は、ご面倒ですが、IKOのキット(tar)をWRCから入手してください。
+    今回使用するのは、Software Distribution -> Components下にあるInterSystems Kubernetes Operator(AMD) (iris_operator_amd-3.6.7.100-unix.tar.gz)です。  
+    解凍したtarのchartフォルダをgit cloneしたフォルダに移動してください。
+
     ```
+    $ pwd
+    /home/irismeister/git/iris-k8s-vs2021
+    $ tar -xvf ./iris_operator_amd-3.6.7.100-unix.tar.gz
+    $ mv iris_operator_amd-3.6.7.100/chart .
+    ```
+
     下記のような構造になるはずです。
-    ```bash
+
+    ```
     $ tree chart/
-    chart/
+    chart
     └── iris-operator
         ├── Chart.yaml
         ├── README.md
@@ -125,16 +150,20 @@ Software Distribution -> Components下にあるInterSystems Kubernetes Operator�
         │   ├── user-roles.yaml
         │   └── validating-webhook.yaml
         └── values.yaml
+
+    2 directories, 16 files
     ```
-3. HELMのインストール  
+3. HELM(V3)のインストール  
 
     ```bash
     $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
     ```
 
 4. 評価ライセンスキーの入手  
-IKOは、Shard/ミラーを構成するため製品版のIRISとライセンスキーを使用します。
+IKOを使用して、ECP,Shard,ミラーを構成する場合、製品版のIRISとライセンスキーが必要です。
 IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効なコンテナバージョン用のIRIS評価ライセンスキーを入手して、~/に配置してください。以後、このファイルは取り扱い注意です(間違ってpublicなレポジトリにpushしないよう)。
+
+> ECP,Shard,ミラーなどを使用しない場合、IKOを使ってIRISコミュニティエディションをプロビジョンすることも可能です。
 
 5. IRISパスワードの設定 
 
@@ -143,14 +172,9 @@ IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効
 ここまでは事前に一度だけ実行しておき、以降は再利用するのが便利です。  
 **ここ以降はAzureでコストが発生する操作を含みます。**
 
-# VNET作成
-```bash
-$ az login
-$ shell/aks-create-subnet.sh
-```
-
 # AKSクラスタの作成
 ```bash
+$ az login
 $ shell/aks-create-aks-cluster.sh
 ```
 > 数分程度、時間がかかります
@@ -158,13 +182,20 @@ $ shell/aks-create-aks-cluster.sh
 ```bash
 $ kubectl get node
 NAME                                STATUS   ROLES   AGE     VERSION
-aks-nodepool1-35959336-vmss000000   Ready    agent   4m4s    v1.23.8
-aks-nodepool1-35959336-vmss000001   Ready    agent   3m35s   v1.23.8
-aks-nodepool1-35959336-vmss000002   Ready    agent   2m50s   v1.23.8
+aks-nodepool1-71407409-vmss000000   Ready    agent   113s   v1.26.6
+aks-nodepool1-71407409-vmss000001   Ready    agent   118s   v1.26.6
+aks-nodepool1-71407409-vmss000002   Ready    agent   2m4s   v1.26.6
 ```
 
 # Demo内容
 [demo.txt](docs/demo.txt)を参照ください。
+
+デモでは、下記を実行します。
+- バニラIRIS(Community Edition)をDeploymentとしてデプロイ(スタンドアロン構成)
+- バニラIRIS(Community Edition)をStatefulSetとしてデプロイ(スタンドアロン構成)
+- IKOのデプロイ
+- IKOを使用したバニラIRIS(製品版)のデプロイ(Mirror,ECP構成。WGWサイドカー,スタンドアロンWGW)
+- IKOを使用したユーザ作成イメージのデプロイ(Mirror,ECP構成。WGWサイドカー,スタンドアロンWGW)
 
 IKOを利用したデプロイを[Lens](https://k8slens.dev/)で表示するとこのようになります。
 ![lens1](docs/lens1.png)
@@ -183,34 +214,37 @@ AKSクラスタを完全に削除するには下記を実行してください�
 ```bash
 source shell/envs.sh
 az group delete --name $aksrg --yes --no-wait
-az group delete --name $rg --yes --no-wait
 ```
 
 念のため、Azureのポータルで、下記のリソースグループが削除(もしくは内容が空)されていることを確認してください。
 ```bash
-$ az group list --query "[?name=='iris-rg']"
-[]
 az group list --query "[?name=='iris-aks-rg']"
 []
 ```
 
-次回は、「VNET作成」から再実行できます。
+次回は、「AKSクラスタの作成」から再実行できます。
 
 # IKOの動作
 これを見れば、IKOが実際に何を行っているのかを知ることができます。
+
 ## IKOによるCPFの上書き設定内容
-下記コマンドで、IKOが実施したcpf mergeの[内容](iko-cm/data-0.txt
-)を確認することが出来ます。
+下記コマンドで、IKOが実施したcpf mergeの内容を確認することが出来ます。
 ```bash
 $ kubectl describe cm iris-vs2021-data-0
+$ kubectl describe cm iris-vs2021-compute
 ```
+
+[iris-vs2021-data-0の内容](iko-cm/data-0.txt)
+
+[iris-vs2021-computeの内容](iko-cm/compute-0.txt)
 
 ## IKOによるKubernetesの操作
 下記コマンドで、IKOが作成したPODやServiceのyamlを出力することができます。
 
 ```bash
-$ kubectl get pod iris-vs2021-data-0-0 -o yaml
-$ kubectl get pod iris-vs2021-data-0-1 -o yaml
-$ kubectl get statefulset iris-vs2021-data-0 -o yaml
-$ kubectl get svc iris-vs2021 -o yaml
+$ kubectl get pod iris-vs2021-data-0-0 -o yaml > export/data-0-0.yml
+$ kubectl get pod iris-vs2021-data-0-1 -o yaml > export/data-0-1.yml
+$ kubectl get pod iris-vs2021-compute-0 -o yaml > export/compute-0.yml
+$ kubectl get statefulset iris-vs2021-data-0 -o yaml > export/data-0.statefulset.yaml
+$ kubectl get svc iris-vs2021 -o yaml > export/svc.yaml
 ```

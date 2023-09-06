@@ -36,7 +36,7 @@ ClassMethod setup(ByRef tVars) As %Status
 {
   Set tSC='$$$OK
   Try {
-    Set Namespace="MYAPP"
+    Set Namespace="myapp"
     Set webapp="/csp/"_Namespace
 
     If '$D(tVars("Namespace")) { Set tVars("Namespace")=Namespace }
@@ -52,16 +52,6 @@ ClassMethod setup(ByRef tVars) As %Status
     Set oldns=$NAMESPACE
     New $NAMESPACE
     Set $NAMESPACE="%SYS"
-
-#If 1
-    #; install ZPM (because I want to use UnitTest related utilities)
-    Do ##class(Security.SSLConfigs).Create("z")
-    Set r=##class(%Net.HttpRequest).%New(),r.Server="pm.community.intersystems.com",r.SSLConfiguration="z",r.Https=1
-    Set tSC=r.Get("/packages/zpm/latest/installer")
-    $$$ThrowOnError(tSC)
-    Set tSC=$system.OBJ.LoadStream(r.HttpResponse.Data,"c")
-    $$$ThrowOnError(tSC)
-#EndIf
 
     Set tSC = ##Class(Security.Applications).Get(webapp,.props)
     $$$ThrowOnError(tSC)

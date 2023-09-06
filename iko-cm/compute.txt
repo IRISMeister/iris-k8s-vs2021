@@ -1,5 +1,5 @@
 Name:         iris-vs2021-compute
-Namespace:    default
+Namespace:    iris-ns
 Labels:       <none>
 Annotations:  <none>
 
@@ -12,20 +12,17 @@ compute.cpf:
 DefaultPort=1972
 WebServerPort=52773
 [ECPServers]
-IRIS-0=iris-vs2021-data-0-0.iris-svc.default.svc.cluster.local,1972,1
+IRIS-0=iris-vs2021-data-0-0.iris-svc.iris-ns.svc.cluster.local,1972,1
 
 [Actions]
 ModifyService:Name=%service_ecp,Enabled=1
 CreateDatabase:Name=iriscluster,Directory=:mirror:IRISMIRROR1:IRISCLUSTER,Server=IRIS-0,LogicalOnly=1
 CreateNamespace:Name=IRISCLUSTER,Globals=iriscluster,Routines=iriscluster
-ModifyApplication:Name=/csp/broker,Path=/irissys/data/IRIS/mgr/../csp/broker
-
 
 
 [Journal]
 CurrentDirectory=/irissys/journal1/
 AlternateDirectory=/irissys/journal2/
-
 [config]
 wijdir=/irissys/wij/
 MaxServerConn=64

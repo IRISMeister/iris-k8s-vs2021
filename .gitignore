@@ -1,5 +1,7 @@
 memo.txt
 chart/
 export/
-shell/envs.sh
 iris.key
+chart.old/
+*.tar.gz
+iris_operator*

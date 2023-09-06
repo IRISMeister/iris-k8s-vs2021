@@ -1,5 +1,5 @@
 Name:         iris-vs2021-data-0
-Namespace:    default
+Namespace:    iris-ns
 Labels:       <none>
 Annotations:  <none>
 
@@ -11,16 +11,11 @@ data.cpf:
 [Startup]
 DefaultPort=1972
 WebServerPort=52773
-ArbiterURL=iris-vs2021-arbiter-0.iris-svc.default.svc.cluster.local:2188
-MirrorSetName=IRISMIRROR1
-MirrorMember=auto
-MirrorPrimary=iris-vs2021-data-0-0.iris-svc.default.svc.cluster.local
 [Actions]
 ModifyService:Name=%service_ecp,Enabled=1
 CreateDatabase:Name=iriscluster,Directory=/irissys/data/IRIS/mgr/iriscluster,MirrorSetName=IRISMIRROR1,MirrorDBName=iriscluster
 CreateNamespace:Name=IRISCLUSTER,Globals=iriscluster,Routines=iriscluster
-ModifyApplication:Name=/csp/broker,Path=/irissys/data/IRIS/mgr/../csp/broker
-
+ConfigMirror:Name=IRISMIRROR1,Member=auto,Primary=auto,Map="primary,backup",ArbiterURL=iris-vs2021-arbiter-0.iris-svc.iris-ns.svc.cluster.local:2188
 
 [Journal]
 CurrentDirectory=/irissys/journal1/

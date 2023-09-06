@@ -34,9 +34,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: my-iris
-        image: containers.intersystems.com/intersystems/iris-community:2022.1.0.209.0
-        args: 
-        - --check-caps false # 2022.2 and later won't need this
+        image: containers.intersystems.com/intersystems/iris-community:2023.2.0.227.0
         ports:
         - containerPort: 1972
         - containerPort: 52773

@@ -18,7 +18,7 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 2Gi
+            storage: 5Gi
   updateStrategy:
     type: RollingUpdate
   serviceTemplate:
@@ -27,24 +27,67 @@ spec:
 
   topology:
     arbiter:
-      image: containers.intersystems.com/intersystems/arbiter:2022.1.0.209.0
+      image: containers.intersystems.com/intersystems/arbiter:2023.2.0.227.0
       preferredZones:
         - japaneast-1
     data:
       #shards: 1
       mirrored: true
-      image: containers.intersystems.com/intersystems/iris:2022.1.0.209.0
+      image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
+      compatibilityVersion: "2023.2.0"
       podTemplate:
         spec:
           args: 
-            - --check-caps false
       preferredZones:
         - japaneast-2
         - japaneast-3
+      storageDB:
+        resources:
+          requests:
+            storage: 5Gi
+      webgateway:
+        image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
+        applicationPaths:
+        - /csp/sys
+        - /csp/broker
+        - /api
+        - /isc
+        - /oauth2
+        - /ui
+        loginSecret:
+          name: webgateway-secret
+
     compute:
-      image: containers.intersystems.com/intersystems/iris:2022.1.0.209.0
+      image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
+      compatibilityVersion: "2023.2.0"
       podTemplate:
         spec:
           args: 
-            - --check-caps false
       replicas: 2
+      webgateway:
+        image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
+        applicationPaths:
+        - /csp/sys
+        - /csp/broker
+        - /api
+        - /isc
+        - /oauth2
+        - /ui
+        loginSecret:
+          name: webgateway-secret
+
+    # see https://github.com/intersystems-community/webgateway-examples/tree/master/demo-compose
+    webgateway:
+      replicas: 1
+      image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
+      applicationPaths:
+        #; All of the IRIS instance's system default applications.
+        #; For Management Portal only, just use '/csp/sys'.
+        #; To support other applications, please add them to this list.
+        - /csp/sys
+        - /csp/broker
+        - /api
+        - /isc
+        - /oauth2
+        - /ui
+        - /csp/myapp
