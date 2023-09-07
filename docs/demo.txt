@@ -109,11 +109,41 @@ kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
 独自イメージとNGINXを使用して、POSTはxxx、GETはyyyに転送される環境をセットアップします。
 
-ユーザ作成のコンテナイメージのビルド
-$ docker build ./build -t dpmeister/irisdemo:simple
+イメージのビルド
+$ docker compose build
 
-ユーザ作成のコンテナイメージ(data用)をプライベートレポにPush
-$ docker push dpmeister/irisdemo:simple
+実行
+docker engineを使ったローカルでのテスト実行。
+$ docker compose up -d
+$ curl -s -X POST http://localhost:8080/csp/myapp/test -u appuser:sys | jq
+{
+  "HostName": "iris",
+  "UserName": "appuser",
+  "Method": "Post",
+  "TimeStamp": "09/07/2023 10:31:30"
+}
+$ curl -s http://localhost:8080/csp/myapp/test -u appuser:sys | jq
+{
+  "HostName": "iris",
+  "UserName": "appuser",
+  "Method": "Get",
+  "TimeStamp": "09/07/2023 10:33:33",
+  "Results": [
+    {
+      "TimeStamp": "09/07/2023 10:31:30"
+    },
+    {
+      "TimeStamp": "09/07/2023 10:31:21"
+    },
+    {
+      "TimeStamp": "09/07/2023 10:30:52"
+    }
+  ]
+}
+$ docker compose down
+
+プライベートレポにPush
+$ docker compose push
     
 ユーザ作成のコンテナイメージ取得時のクレデンシャル情報
 (プライベートリポジトリ上にある)ユーザ作成のイメージを使用する場合は、そのイメージを取得するためのdocker loginを実行してください。
@@ -124,6 +154,7 @@ IKOでデプロイ
 もしpvが残っていたら削除します。
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
+(shell/prep-iris-cluster.sh もし未実行であれば)
 kubectl apply -f yaml/iris-iko-userimage.yaml
 
 (プライマリの)DATAノードにてテーブルにデータをロードし、COMPUTEノードから参照可能であることを確認する
@@ -143,11 +174,23 @@ PID     name    born
 ---------------------------------------------------------------------------
 [SQL]MYAPP>>q
 
+バックアップのDATAノードでSELECT実行
+$ kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U MYAPP
+MYAPP>:sql
+同じSQLを発行して同一の出力となることを確認する。
+
+ComputeノードでSELECT実行
 $ kubectl exec -ti iris-vs2021-compute-0 -- iris session iris -U MYAPP
 MYAPP>:sql
 同じSQLを発行して同一の出力となることを確認する。
 
 NGINXを使用したロードバランス例(実験中につき未完成)
+
+アクセス時にその応答から接続先がわかるように、WGW(サイドカー)用のApacheのindex.htmlの書き換え。
+kubectl exec -ti iris-vs2021-compute-0 -c webgateway -- bash -c 'echo "<html><body>compute-0</body></html>" > /var/www/html/index.html'
+kubectl exec -ti iris-vs2021-compute-1 -c webgateway -- bash -c 'echo "<html><body>compute-1</body></html>" > /var/www/html/index.html'
+kubectl exec -ti iris-vs2021-data-0-0 -c webgateway -- bash -c 'echo "<html><body>data-0-0</body></html>" > /var/www/html/index.html'
+kubectl exec -ti iris-vs2021-data-0-1 -c webgateway -- bash -c 'echo "<html><body>data-0-1</body></html>" > /var/www/html/index.html'
 
 $ kubectl create cm nginx-config --from-file=conf/default.conf
 $ kubectl apply -f yaml/nginx.yaml
@@ -157,12 +200,6 @@ my-nginx                         LoadBalancer   10.0.187.162   52.253.120.187   
 
 NGINXのコンテナにssh
 $ kubectl exec -ti service/my-nginx -- bash
-
-アクセス時にその応答から接続先がわかるように、WGW(サイドカー)用のApacheのindex.htmlの書き換え。
-kubectl exec -ti iris-vs2021-compute-0 -c webgateway -- bash -c 'echo "<html><body>compute-0</body></html>" > /var/www/html/index.html'
-kubectl exec -ti iris-vs2021-compute-1 -c webgateway -- bash -c 'echo "<html><body>compute-1</body></html>" > /var/www/html/index.html'
-kubectl exec -ti iris-vs2021-data-0-0 -c webgateway -- bash -c 'echo "<html><body>data-0-0</body></html>" > /var/www/html/index.html'
-kubectl exec -ti iris-vs2021-data-0-1 -c webgateway -- bash -c 'echo "<html><body>data-0-1</body></html>" > /var/www/html/index.html'
 
 $ curl http://52.253.120.187/   <= my-nginxのEXTERNAL-IP 
 <html><body>compute-0</body></html>
