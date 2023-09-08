@@ -1,3 +1,5 @@
+# ローカルでのdockerを使ったテスト実行用のyml
+
 version: '3.7'
 #
 services:
@@ -30,3 +32,21 @@ services:
     - ISC_CSP_INI_FILE=/webgateway-shared/CSP.ini
     volumes:
     - ./webgateway:/webgateway-shared
+
+  # For apache bench
+  ab:
+    build:
+      context: ./ab
+    image: dpmeister/irisdemo:ab
+    tty: true
+
+  simple-server:
+    build:
+      context: ./python
+    image: dpmeister/irisdemo:simple-server
+    init: true
+    ports:
+    - "8888:80"
+    environment:
+    - BASEURL_GET=http://webgateway
+    - BASEURL_POST=http://webgateway

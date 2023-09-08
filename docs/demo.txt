@@ -1,5 +1,9 @@
 README.mdの[AKSクラスタの作成]まで完了している事
 
+# オプショナル
+実行してもしなくても良い内容。
+optional.txt
+
 # Pod起動
 
 Pod
@@ -107,43 +111,9 @@ kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
 # IKOによるユーザ作成のコンテナイメージのデプロイ
 
-独自イメージとNGINXを使用して、POSTはxxx、GETはyyyに転送される環境をセットアップします。
+独自イメージとNGINXを使用して、POSTはDATAに、GETはCOMPUTEに転送される環境をセットアップします。
 
-イメージのビルド
-$ docker compose build
-
-実行
-docker engineを使ったローカルでのテスト実行。
-$ docker compose up -d
-$ curl -s -X POST http://localhost:8080/csp/myapp/test -u appuser:sys | jq
-{
-  "HostName": "iris",
-  "UserName": "appuser",
-  "Method": "Post",
-  "TimeStamp": "09/07/2023 10:31:30"
-}
-$ curl -s http://localhost:8080/csp/myapp/test -u appuser:sys | jq
-{
-  "HostName": "iris",
-  "UserName": "appuser",
-  "Method": "Get",
-  "TimeStamp": "09/07/2023 10:33:33",
-  "Results": [
-    {
-      "TimeStamp": "09/07/2023 10:31:30"
-    },
-    {
-      "TimeStamp": "09/07/2023 10:31:21"
-    },
-    {
-      "TimeStamp": "09/07/2023 10:30:52"
-    }
-  ]
-}
-$ docker compose down
-
-プライベートレポにPush
-$ docker compose push
+イメージのビルドとテスト方法はbuild.txt。
     
 ユーザ作成のコンテナイメージ取得時のクレデンシャル情報
 (プライベートリポジトリ上にある)ユーザ作成のイメージを使用する場合は、そのイメージを取得するためのdocker loginを実行してください。
@@ -184,7 +154,11 @@ $ kubectl exec -ti iris-vs2021-compute-0 -- iris session iris -U MYAPP
 MYAPP>:sql
 同じSQLを発行して同一の出力となることを確認する。
 
-NGINXを使用したロードバランス例(実験中につき未完成)
+
+**** ここから先は、実験中です。期待通りには動作しません。 ****
+
+
+# NGINXを使用したロードバランス例(実験中につき未完成)
 
 アクセス時にその応答から接続先がわかるように、WGW(サイドカー)用のApacheのindex.htmlの書き換え。
 kubectl exec -ti iris-vs2021-compute-0 -c webgateway -- bash -c 'echo "<html><body>compute-0</body></html>" > /var/www/html/index.html'
@@ -258,8 +232,40 @@ $ curl http://20.27.13.103/csp/myapp/test -u appuser:sys
 
 GET元は"HostName":"iris-vs2021-compute-0(あるいは-1)になっている。
 
+# pythonを使用したロードバランス例(実験中につき未完成)
+
+irismeister@JP7420IWAMOTO:~/git/iris-k8s-vs2021$ kubectl get svc
+NAME                             TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)                       AGE
+simple-server                    LoadBalancer   10.0.131.22   20.222.220.118   80:32295/TCP                  23m
+
+$ curl -u appuser:sys http://20.222.220.118/csp/myapp/test
+$ curl -u appuser:sys -X POST -H 'Content-type: application/json' -d '{a:1}' http://20.222.220.118/csp/myapp/test
+
+動くがひどく遅い...。応答に2,3秒かかかってる感じ。
+
+simple-serverからcurl実行してもまだ遅い。
+$ kubectl exec -ti service/simple-server -- bash
+root@simple-server-79795dcf7c-v278x:/usr/src/app# curl -u appuser:sys http://localhost/csp/myapp/test
+
+どうやらservice公開すると、サービスを通さなくても遅くなる模様。simple-server-nosvc.yamlだと遅くならない。
+
+$ kubectl apply -f yaml/simple-server-nosvc.yaml
+$ kubectl exec -ti simple-server-7b4fdc5f46-qh5v2 -- bash
+root@simple-server-7b4fdc5f46-qh5v2:/usr/src/app# curl -u appuser:sys http://localhost:8080/csp/myapp/test
+[これだけなら早い]
+
+$ kubectl expose deployment simple-server --type=LoadBalancer --name=simple-server --port 8080
+[これを実行した後に遅くなった]
+
+*** 断念 ***
+
+ローカル(docker)で実行した場合は、応答がすぐ返ってくる。(8888はsimple-serverのポート)
+$ docker compose up -d
+$ curl -u appuser:sys http://localhost:8888/csp/myapp/test
 
 各IRISインスタンスの管理ポータルへのアクセス方法
+(製品版なので、SideCarのWGWを稼働させています)
+
 kubectl port-forward iris-vs2021-data-0-0 9999:80
 あるいは
 kubectl port-forward iris-vs2021-compute-0 9999:80
@@ -271,36 +277,3 @@ IRISクラスタの削除
 kubectl delete -f yaml/iris-iko-userimage.yaml
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
-# オプショナル
-
-(オプショナル) Dashboard(k8sのUI)を導入
-https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
-手順
-https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md
-
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
-kubectl apply -f yaml/dashboard-adminuser.yaml
-kubectl apply -f yaml/dashboard-adminuser-role.yaml
-kubectl -n kubernetes-dashboard create token admin-user
-  [tokenが表示されるのでコピーしておいてください。ログイン時にペーストします]
-
-kubectl proxy
-open http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-
-
-(オプショナル) Lensの導入 
-https://k8slens.dev/  
-WSL2環境の場合、https://backpackkevin.com/lens-ide-working-with-wsl-2/
-
-(オプショナル Lensにモニタ結果が表示されるようになる)
-Prometheus
-kubectl create ns monitoring
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add stable https://charts.helm.sh/stable
-helm repo update
-helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
-
--------------------------------
-(オプショナル)デフォルトのネームスペースを指定
-kubectl create namespace iris-ns
-kubectl config set-context $(kubectl config current-context) --namespace=iris-ns

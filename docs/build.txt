@@ -1,0 +1,52 @@
+イメージのビルド、ローカルでのdockerを使ったテスト、pushの手順
+
+
+$ docker compose build
+
+docker engineを使ったローカルでのテスト実行
+$ docker compose up -d
+
+8080ポートはwebgatewayの公開ポート。
+
+$ curl -s -X POST http://localhost:8080/csp/myapp/test -u appuser:sys | jq
+{
+  "HostName": "iris",
+  "UserName": "appuser",
+  "Method": "Post",
+  "TimeStamp": "09/07/2023 10:31:30"
+}
+$ curl -s http://localhost:8080/csp/myapp/test -u appuser:sys | jq
+{
+  "HostName": "iris",
+  "UserName": "appuser",
+  "Method": "Get",
+  "TimeStamp": "09/07/2023 10:33:33",
+  "Results": [
+    {
+      "TimeStamp": "09/07/2023 10:31:30"
+    },
+    {
+      "TimeStamp": "09/07/2023 10:31:21"
+    },
+    {
+      "TimeStamp": "09/07/2023 10:30:52"
+    }
+  ]
+}
+
+simple-server(GET/POSTで接続先を切り替えるG/W)経由でのアクセス
+
+8888ポートはsimple-serverの公開ポート。
+
+$ curl -u appuser:sys http://localhost:8888/csp/myapp/test -v
+$ curl -u appuser:sys -X POST -H 'Content-type: application/json' -d '{a:1}' http://localhost:8888/csp/myapp/test
+
+
+Apache Benchで負荷をかける方法。
+$ docker compose exec ab bench.sh
+
+$ docker compose down
+
+プライベートレポにPush
+$ docker compose push
+    

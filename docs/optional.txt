@@ -1,0 +1,33 @@
+# オプショナル
+
+(オプショナル) Dashboard(k8sのUI)を導入
+https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
+手順
+https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+kubectl apply -f yaml/dashboard-adminuser.yaml
+kubectl apply -f yaml/dashboard-adminuser-role.yaml
+kubectl -n kubernetes-dashboard create token admin-user
+  [tokenが表示されるのでコピーしておいてください。ログイン時にペーストします]
+
+kubectl proxy
+open http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+
+
+(オプショナル) Lensの導入 
+https://k8slens.dev/  
+WSL2環境の場合、https://backpackkevin.com/lens-ide-working-with-wsl-2/
+
+(オプショナル Lensにモニタ結果が表示されるようになる)
+Prometheus
+kubectl create ns monitoring
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add stable https://charts.helm.sh/stable
+helm repo update
+helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
+
+-------------------------------
+(オプショナル)デフォルトのネームスペースを指定
+kubectl create namespace iris-ns
+kubectl config set-context $(kubectl config current-context) --namespace=iris-ns
