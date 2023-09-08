@@ -1,0 +1,12 @@
+# ローカルでのdockerを使ったテスト実行用のyml
+
+version: '3.7'
+#
+services:
+  simple-server:
+    build:
+      context: ./python
+    image: dpmeister/irisdemo:simple-server-wip
+    init: true
+    ports:
+    - "8888:8080"

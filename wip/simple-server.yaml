@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-server
+spec:
+  selector:
+    matchLabels:
+      app: simple-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: simple-server
+    spec:
+      containers:
+      - name: simple-server
+        image: dpmeister/irisdemo:simple-server-wip
+        imagePullPolicy: "Always"
+      imagePullSecrets:
+        - name: dockerhub-secret
+

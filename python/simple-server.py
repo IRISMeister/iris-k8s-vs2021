@@ -21,12 +21,12 @@ class MyHTTPRequestHandler(BaseHTTPRequestHandler):
 
         url=baseurl_get+parsed_path.path
         print('Sending GET reuqest',flush=True)
-        #response=requests.get(url,headers=self.headers)
+        response=requests.get(url,headers=self.headers)
         print('Writing response',flush=True)
 
-        #self.wfile.write(response.content)
-        result = { 'Result': {'Status': 1, 'version': 1.0} }
-        self.wfile.write(json.dumps(result).encode())
+        self.wfile.write(response.content)
+        #result = { 'Result': {'Status': 1, 'version': 1.0} }
+        #self.wfile.write(json.dumps(result).encode())
 
         self.wfile.flush()
 
