@@ -25,11 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Log into isc registry
+      - name: Log into docker registry
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
-      - name: Log into docker registry
-        run: echo "${{ secrets.ISCREPO_TOKEN }}" | docker login -u ${{ secrets.ISCREPO_USERNAME }} --password-stdin
+      - name: Log into isc registry
+        run: echo "${{ secrets.ISCREPO_TOKEN }}" | docker login -u ${{ secrets.ISCREPO_USERNAME }} containers.intersystems.com --password-stdin
 
       - name: Build image
         run: docker build ./build --file build/Dockerfile --tag image
