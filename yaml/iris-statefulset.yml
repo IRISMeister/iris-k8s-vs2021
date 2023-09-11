@@ -43,6 +43,8 @@ spec:
           value: /irissys/cpf/merge.cpf
         - name: ISC_DATA_DIRECTORY
           value: /DATA/IRIS
+        - name: TZ
+          value: JST-9
         volumeMounts:
         - mountPath: /irissys/cpf/
           name: iris-cpf

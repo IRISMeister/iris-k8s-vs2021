@@ -30,6 +30,9 @@ spec:
         image: nginx
         ports:
         - containerPort: 80
+        env:
+        - name: TZ
+          value: JST-9
         volumeMounts:
         - name: conf
           mountPath: /etc/nginx/conf.d/

@@ -25,7 +25,11 @@ kubectl exec -ti iris-0 -- iris session iris
 kubectl get svc
   NAME      TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)           AGE
   my-iris   LoadBalancer   10.0.239.90   20.188.20.225   52773:30699/TCP   16s
+
+管理ポータルへのアクセス
   http://EXTERNAL-IP:52773/csp/sys/%25CSP.Portal.Home.zen
+
+
 replicas: 1->2
 kubectl apply -f yaml/iris-statefulset.yml
 kubectl delete -f yaml/iris-statefulset.yml
@@ -93,38 +97,29 @@ IRISCLUSTER>w ^x
 IRISCLUSTER>h
 
 
-各IRISインスタンスの管理ポータルへのアクセス方法
-(コミュニティエディションなので、PWSがポート52773で稼働しています)
-kubectl port-forward iris-vs2021-data-0-0 9999:52773
+## 各IRISインスタンスの管理ポータルへのアクセス方法
+(製品版なので、SideCarのWGWを稼働させています)
+
+kubectl port-forward iris-vs2021-data-0-0 9999:80
 あるいは
-kubectl port-forward iris-vs2021-compute-0 9999:52773
+kubectl port-forward iris-vs2021-compute-0 9999:80
 
 http://localhost:9999/csp/bin/Systems/Module.cxw
 http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen
 
-IKOが実施したcpf mergeの内容を確認する方法
-kubectl describe cm iris-vs2021-data-0
 
-IRISクラスタの削除
+## IRISクラスタの削除
 kubectl delete -f yaml/iris-iko.yaml
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
 # IKOによるユーザ作成のコンテナイメージのデプロイ
 
-独自イメージとNGINXを使用して、POSTはDATAに、GETはCOMPUTEに転送される環境をセットアップします。
-
 イメージのビルドとテスト方法はbuild.txt。
     
-ユーザ作成のコンテナイメージ取得時のクレデンシャル情報
-(プライベートリポジトリ上にある)ユーザ作成のイメージを使用する場合は、そのイメージを取得するためのdocker loginを実行してください。
-
-dockerのクレデンシャル情報は、[prep-iris-cluster.sh](shell/prep-iris-cluster.sh)で使用されます
-
 IKOでデプロイ
 もしpvが残っていたら削除します。
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
 
-(shell/prep-iris-cluster.sh もし未実行であれば)
 kubectl apply -f yaml/iris-iko-userimage.yaml
 
 (プライマリの)DATAノードにてテーブルにデータをロードし、COMPUTEノードから参照可能であることを確認する
@@ -155,10 +150,103 @@ MYAPP>:sql
 同じSQLを発行して同一の出力となることを確認する。
 
 
-**** ここから先は、実験中です。期待通りには動作しません。 ****
+## RESTサービス
+
+```
+$ kubectl get svc
+NAME                             TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                       AGE
+iris-vs2021-webgateway           LoadBalancer   10.0.12.8      52.140.233.103   80:31108/TCP                  8m40s
+```
+
+iris-vs2021-webgatewayのEXTERNAL-IPを使用します。
+
+```
+$ extip=52.140.233.103
+$ curl -s -u appuser:sys -X POST -H 'Content-type: application/json' -d '{a:1}' http://$extip/csp/myapp/test | jq
+{
+  "HostName": "iris-vs2021-compute-1",
+  "UserName": "appuser",
+  "Method": "Post",
+  "TimeStamp": "09/11/2023 04:56:18"
+}
+$ curl -s -u appuser:sys http://$extip/csp/myapp/test
+{
+  "HostName": "iris-vs2021-compute-1",
+  "UserName": "appuser",
+  "Method": "Get",
+  "TimeStamp": "09/11/2023 04:56:36",
+  "Results": [
+    {
+      "TimeStamp": "09/11/2023 04:56:18"
+    }
+  ]
+}
+```
+
+> GET先、POST先共にcompute-0, compute-1のラウンドロビンとなります。
+
+## 各IRISインスタンスの管理ポータルへのアクセス方法
+(製品版なので、SideCarのWGWを稼働させています)
+
+kubectl port-forward iris-vs2021-data-0-0 9999:80
+あるいは
+kubectl port-forward iris-vs2021-compute-0 9999:80
+
+http://localhost:9999/csp/bin/Systems/Module.cxw
+http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen
+
+IRISクラスタの削除
+kubectl delete -f yaml/iris-iko-userimage.yaml
+kubectl delete pvc -l intersystems.com/name=iris-vs2021
+
+**** ここから先は、実験中です ****
+
+# pythonを使用したロードバランス例
+
+独自イメージとpython(http.server)を使用して、POSTはDATAに、GETはCOMPUTEに転送される環境をセットアップします。
+
+1. イメージ名の変更
+
+ご利用環境に合わせて[docker-compose.yml](docker-compose.yml)内のイメージ名を変更してください。
+
+> 都合で、タグ名としてsimple-serverと使用していますが、普通はここにはバージョンを設定します。
+
+```
+  simple-server:
+    image: dpmeister/irisdemo:simple-server
+```
+
+2. イメージをビルド、PUSHします。
+
+```
+$ cd python
+$ docker compose build
+$ docker compose push
+```
+
+3. K8Sにデプロイします。
+
+```
+$ kubectl apply -f yaml/simple-server.yaml
+$ kubectl get svc
+NAME                             TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)                       AGE
+simple-server                    LoadBalancer   10.0.131.22   20.222.220.118   80:32295/TCP                  23m
+```
+
+4. アクセス
+
+simple-serverのEXTERNAL-IPを使用します。
+
+```
+$ extip=20.222.220.118
+$ curl -s -u appuser:sys http://$extip/csp/myapp/test | jq
+$ curl -s -u appuser:sys -X POST -H 'Content-type: application/json' -d '{a:1}' http://$extip/csp/myapp/test
+```
 
 
-# NGINXを使用したロードバランス例(実験中につき未完成)
+# NGINXを使用したロードバランス例(NGINX Community版使用につき、フェールオーバに難あり)
+
+独自イメージとNGINXを使用して、POSTはDATAに、GETはCOMPUTEに転送される環境をセットアップします。
 
 アクセス時にその応答から接続先がわかるように、WGW(サイドカー)用のApacheのindex.htmlの書き換え。
 kubectl exec -ti iris-vs2021-compute-0 -c webgateway -- bash -c 'echo "<html><body>compute-0</body></html>" > /var/www/html/index.html'
@@ -186,7 +274,7 @@ $ kubectl logs -f service/my-nginx
 10.224.0.6 - - [06/Sep/2023:02:45:01 +0000] "GET / HTTP/1.1" 200 36 "-" "curl/7.81.0" "-"
 10.224.0.5 - - [06/Sep/2023:02:45:13 +0000] "POST / HTTP/1.1" 200 36 "-" "curl/7.81.0" "-"
 
-IRISのREST呼び出し
+IRISの疎通確認
 $ curl http://52.253.120.187/api/monitor/metrics
 
 
@@ -216,64 +304,4 @@ SUCCESS
 root@my-nginx-66dc48b8dc-848f4:/# curl http://iris-vs2021-data-0-1.iris-svc.default.svc.cluster.local/csp/bin/mirror_status.cxw
 FAILED
 
-
-$ curl -X POST http://20.27.13.103/csp/myapp/test -v
-< HTTP/1.1 401 Unauthorized
-SideCarのappの認証方法を設定する方法が無い。
-
-ひとまずログイン認証で動作確認を継続。
-$ curl -X POST http://20.27.13.103/csp/myapp/test -u appuser:sys
-{"HostName":"iris-vs2021-data-0-0","UserName":"appuser","Method":"Post","TimeStamp":"09/06/2023 07:13:39"}
-
-POST先は"HostName":"iris-vs2021-data-0-0になっている。
-
-$ curl http://20.27.13.103/csp/myapp/test -u appuser:sys
-{"HostName":"iris-vs2021-compute-1","UserName":"appuser","Method":"Get","TimeStamp":"09/06/2023 07:14:12","Results":[{"TimeStamp":"09/06/2023 07:14:00"},{"TimeStamp":"09/06/2023 07:13:39"}]}
-
-GET元は"HostName":"iris-vs2021-compute-0(あるいは-1)になっている。
-
-# pythonを使用したロードバランス例(実験中につき未完成)
-
-irismeister@JP7420IWAMOTO:~/git/iris-k8s-vs2021$ kubectl get svc
-NAME                             TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)                       AGE
-simple-server                    LoadBalancer   10.0.131.22   20.222.220.118   80:32295/TCP                  23m
-
-$ curl -u appuser:sys http://20.222.220.118/csp/myapp/test
-$ curl -u appuser:sys -X POST -H 'Content-type: application/json' -d '{a:1}' http://20.222.220.118/csp/myapp/test
-
-動くがひどく遅い...。応答に2,3秒かかかってる感じ。
-
-simple-serverからcurl実行してもまだ遅い。
-$ kubectl exec -ti service/simple-server -- bash
-root@simple-server-79795dcf7c-v278x:/usr/src/app# curl -u appuser:sys http://localhost/csp/myapp/test
-
-どうやらservice公開すると、サービスを通さなくても遅くなる模様。simple-server-nosvc.yamlだと遅くならない。
-
-$ kubectl apply -f yaml/simple-server-nosvc.yaml
-$ kubectl exec -ti simple-server-7b4fdc5f46-qh5v2 -- bash
-root@simple-server-7b4fdc5f46-qh5v2:/usr/src/app# curl -u appuser:sys http://localhost:8080/csp/myapp/test
-[これだけなら早い]
-
-$ kubectl expose deployment simple-server --type=LoadBalancer --name=simple-server --port 8080
-[これを実行した後に遅くなった]
-
-*** 断念 ***
-
-ローカル(docker)で実行した場合は、応答がすぐ返ってくる。(8888はsimple-serverのポート)
-$ docker compose up -d
-$ curl -u appuser:sys http://localhost:8888/csp/myapp/test
-
-各IRISインスタンスの管理ポータルへのアクセス方法
-(製品版なので、SideCarのWGWを稼働させています)
-
-kubectl port-forward iris-vs2021-data-0-0 9999:80
-あるいは
-kubectl port-forward iris-vs2021-compute-0 9999:80
-
-http://localhost:9999/csp/bin/Systems/Module.cxw
-http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen
-
-IRISクラスタの削除
-kubectl delete -f yaml/iris-iko-userimage.yaml
-kubectl delete pvc -l intersystems.com/name=iris-vs2021
 

@@ -10,7 +10,7 @@ spec:
   ports:
   - protocol: TCP
     port: 80
-    targetPort: 8080
+    targetPort: 80
   type: LoadBalancer
 ---
 apiVersion: apps/v1
@@ -34,9 +34,11 @@ spec:
         env:
         # BASEURL_GETはECP Clientを束ねたbalancerに向けたいが、現状はそうなっていない
         - name: BASEURL_GET
-          value: "http://iris-vs2021-compute-0.iris-svc.default.svc.cluster.local"
+          value: http://iris-vs2021-compute-0.iris-svc.default.svc.cluster.local
         - name: BASEURL_POST
-          value: "http://iris-vs2021-data-0-0.iris-svc.default.svc.cluster.local"
+          value: http://iris-vs2021-data-0-0.iris-svc.default.svc.cluster.local
+        - name: TZ
+          value: JST-9
       imagePullSecrets:
         - name: dockerhub-secret
 

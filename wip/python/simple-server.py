@@ -1,9 +1,9 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer,ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 import json
 import sys
 
-address = ('0.0.0.0', 8080)
+address = ('0.0.0.0', 80)
 
 class MyHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -22,5 +22,5 @@ class MyHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
 sys.stdout = open('debug.log', 'a+')
-with HTTPServer(address, MyHTTPRequestHandler) as server:
+with ThreadingHTTPServer(address, MyHTTPRequestHandler) as server:
     server.serve_forever()
