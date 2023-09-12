@@ -1,23 +1,20 @@
+# 事前準備
 README.mdの[AKSクラスタの作成]まで完了している事
-
-# オプショナル
-実行してもしなくても良い内容。
-optional.txt
 
 # Pod起動
 
-Pod
--------------------------------
+```
 kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2023.2.0.227.0 --
 kubectl describe pod iris
 kubectl logs iris
 kubectl exec -ti iris -- bash
 kubectl exec -ti iris -- iris session iris
 kubectl delete pod iris
-
+```
 
 # StatefulSet起動
--------------------------------
+
+```
 kubectl apply -f yaml/iris-ssd-sc-aks.yaml
 kubectl apply -f yaml/iris-configmap-cpf.yaml
 kubectl apply -f yaml/iris-statefulset.yml
@@ -25,37 +22,60 @@ kubectl exec -ti iris-0 -- iris session iris
 kubectl get svc
   NAME      TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)           AGE
   my-iris   LoadBalancer   10.0.239.90   20.188.20.225   52773:30699/TCP   16s
+```
 
 管理ポータルへのアクセス
+
   http://EXTERNAL-IP:52773/csp/sys/%25CSP.Portal.Home.zen
 
 
+ymlを修正し、適用することで、IRISインスタンスを増やすことができます。
+```
 replicas: 1->2
 kubectl apply -f yaml/iris-statefulset.yml
 kubectl delete -f yaml/iris-statefulset.yml
 kubectl get pvc
 kubectl delete pvc -l app=my-iris
+```
 
-# IKOによるバニラIRISのデプロイ
--------------------------------
+# IKOによるバニラIRISのプロビジョン
+
+## IKOのインストール
+
+```
 shell/prep-iris-cluster.sh
 helm install intersystems chart/iris-operator --wait
+```
 
+## IKOを使用したIRISのプロビジョン
 
+```
 kubectl apply -f yaml/iris-iko.yaml
 kubectl get statefulset -o wide
 kubectl get iriscluster   (runningを確認)
 kubectl get pvc
 kubectl get svc
+```
+
+管理ポータルへのアクセス
+
   http://EXTERNAL:52773/csp/sys/%25CSP.Portal.Home.zen
+
   ミラーモニタで、ミラー名がIRISMIRROR1であること、メンバIRIS-VS2021-DATA-0-0がプライマリであることを確認
 
-プライマリメンバ上で更新を実行
+## 操作
+
+プライマリメンバ上でデータの更新を実行します。
+
+```
 kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISCLUSTER
 IRISCLUSTER>f i=1:1:1000 s ^a(i)=i
 IRISCLUSTER>h
+```
 
-バックアップメンバ上で上記の更新が反映されていることと、更新が失敗する事を確認
+バックアップメンバ上で上記の更新が反映されていることと、更新が失敗する事を確認します。
+
+```
 kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISCLUSTER
 IRISCLUSTER>zw ^a
   ・
@@ -69,8 +89,11 @@ S ^a=1
 ^
 <PROTECT> ^a,/irissys/data/IRIS/mgr/iriscluster/
 IRISCLUSTER>h
+```
 
 ECPクライアントからのアクセスを確認
+
+```
 kubectl exec -ti iris-vs2021-compute-0 -- iris session iris -U IRISCLUSTER
 IRISCLUSTER>zw ^a
   ・
@@ -79,14 +102,25 @@ IRISCLUSTER>zw ^a
 ^a(999)=999
 ^a(1000)=1000
 IRISCLUSTER>h
+```
 
+PODを強制停止して、ミラーをフェールオーバさせます。
+
+```
 kubectl delete pod iris-vs2021-data-0-0
-(BackupがPrimaryに切り替わる)
+```
+
+この時点でBackupがPrimaryに切り替わります。
+
+```
 kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U IRISCLUSTER
 IRISCLUSTER>s ^x=1
 IRISCLUSTER>h
+```
 
-(削除したpodは自動回復し、やがてBackupメンバで起動する)
+削除したpodは自動回復し、やがてBackupメンバで起動します。
+
+```
 kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U IRISCLUSTER
 IRISCLUSTER>s ^x=2
 S ^x=2
@@ -95,34 +129,50 @@ S ^x=2
 IRISCLUSTER>w ^x
 1
 IRISCLUSTER>h
-
+```
 
 ## 各IRISインスタンスの管理ポータルへのアクセス方法
-(製品版なので、SideCarのWGWを稼働させています)
 
+製品版なので、SideCarとしてWGWを稼働させています。
+
+```
 kubectl port-forward iris-vs2021-data-0-0 9999:80
 あるいは
 kubectl port-forward iris-vs2021-compute-0 9999:80
+```
 
-http://localhost:9999/csp/bin/Systems/Module.cxw
-http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen
+CSP管理画面は[http://localhost:9999/csp/bin/Systems/Module.cxw](http://localhost:9999/csp/bin/Systems/Module.cxw)
+
+管理ポータルは、[http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen](http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen)
 
 
-## IRISクラスタの削除
+## IRISクラスタの削除およびPVの削除
+
+```
 kubectl delete -f yaml/iris-iko.yaml
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
+```
 
-# IKOによるユーザ作成のコンテナイメージのデプロイ
+# IKOによるユーザ作成のコンテナイメージのプロビジョン
 
-イメージのビルドとテスト方法はbuild.txt。
+イメージのビルドとテスト方法は[build.txt](build.txt)を参照。
     
-IKOでデプロイ
 もしpvが残っていたら削除します。
+
+```
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
+```
 
+プロビジョン実行。
+```
 kubectl apply -f yaml/iris-iko-userimage.yaml
+```
 
-(プライマリの)DATAノードにてテーブルにデータをロードし、COMPUTEノードから参照可能であることを確認する
+## SQLアクセス
+
+(プライマリの)DATAノードにてテーブルにデータをロードし、COMPUTEノードから参照可能であることを確認します。
+
+```
 $ kubectl exec -ti iris-vs2021-data-0-0 -- iris session iris -U MYAPP
 MYAPP>w ##class(MyApp.Utils).LoadCSV()
 1
@@ -138,17 +188,23 @@ PID     name    born
 7       ジョエル・シルバー      1952
 ---------------------------------------------------------------------------
 [SQL]MYAPP>>q
+```
 
-バックアップのDATAノードでSELECT実行
+バックアップのDATAノードでSELECT実行します。
+
+```
 $ kubectl exec -ti iris-vs2021-data-0-1 -- iris session iris -U MYAPP
 MYAPP>:sql
 同じSQLを発行して同一の出力となることを確認する。
+```
 
-ComputeノードでSELECT実行
+ComputeノードでSELECT実行します。
+
+```
 $ kubectl exec -ti iris-vs2021-compute-0 -- iris session iris -U MYAPP
 MYAPP>:sql
 同じSQLを発行して同一の出力となることを確認する。
-
+```
 
 ## RESTサービス
 
@@ -158,7 +214,7 @@ NAME                             TYPE           CLUSTER-IP     EXTERNAL-IP      
 iris-vs2021-webgateway           LoadBalancer   10.0.12.8      52.140.233.103   80:31108/TCP                  8m40s
 ```
 
-iris-vs2021-webgatewayのEXTERNAL-IPを使用します。
+iris-vs2021-webgatewayのEXTERNAL-IPを使用してRESTアクセスを行います。
 
 ```
 $ extip=52.140.233.103
@@ -183,23 +239,25 @@ $ curl -s -u appuser:sys http://$extip/csp/myapp/test
 }
 ```
 
-> GET先、POST先共にcompute-0, compute-1のラウンドロビンとなります。
+> Topology直下のwebgatewayは、GET先、POST先共にcompute-0, compute-1..., compute-nのラウンドロビンとなります。
 
 ## 各IRISインスタンスの管理ポータルへのアクセス方法
-(製品版なので、SideCarのWGWを稼働させています)
 
-kubectl port-forward iris-vs2021-data-0-0 9999:80
-あるいは
-kubectl port-forward iris-vs2021-compute-0 9999:80
+先ほどのIKO使用時と同じです。
 
-http://localhost:9999/csp/bin/Systems/Module.cxw
-http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen
+## IRISクラスタの削除
 
-IRISクラスタの削除
+```
 kubectl delete -f yaml/iris-iko-userimage.yaml
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
+```
 
-**** ここから先は、実験中です ****
+# SpeedTest
+
+[SpeedTest](https://github.com/intersystems-community/irisdemo-demo-htap)をAKSで稼働させることが出来ます。手順は[こちら](../irisdemo/README.md)です。
+
+
+# **** ここから先は、実験中です ****
 
 # pythonを使用したロードバランス例
 
@@ -224,7 +282,7 @@ $ docker compose build
 $ docker compose push
 ```
 
-3. K8Sにデプロイします。
+3. K8Sにプロビジョンします。
 
 ```
 $ kubectl apply -f yaml/simple-server.yaml
@@ -244,48 +302,74 @@ $ curl -s -u appuser:sys -X POST -H 'Content-type: application/json' -d '{a:1}' 
 ```
 
 
-# NGINXを使用したロードバランス例(NGINX Community版使用につき、フェールオーバに難あり)
+# NGINXを使用したロードバランス例
 
-独自イメージとNGINXを使用して、POSTはDATAに、GETはCOMPUTEに転送される環境をセットアップします。
+(NGINX Community版使用につき、フェールオーバに難あり)
 
-アクセス時にその応答から接続先がわかるように、WGW(サイドカー)用のApacheのindex.htmlの書き換え。
+NGINXをリバースプロキシとして使用して、POSTはDATAに、GETはCOMPUTEに転送される環境をセットアップします。
+
+## 実施手順
+
+1. アクセス時にその応答から接続先がわかるように、WGW(サイドカー)用のApacheのindex.htmlの書き換えます。
+
+```
 kubectl exec -ti iris-vs2021-compute-0 -c webgateway -- bash -c 'echo "<html><body>compute-0</body></html>" > /var/www/html/index.html'
 kubectl exec -ti iris-vs2021-compute-1 -c webgateway -- bash -c 'echo "<html><body>compute-1</body></html>" > /var/www/html/index.html'
 kubectl exec -ti iris-vs2021-data-0-0 -c webgateway -- bash -c 'echo "<html><body>data-0-0</body></html>" > /var/www/html/index.html'
 kubectl exec -ti iris-vs2021-data-0-1 -c webgateway -- bash -c 'echo "<html><body>data-0-1</body></html>" > /var/www/html/index.html'
+```
 
+2. nginxをプロビジョン
+
+```
 $ kubectl create cm nginx-config --from-file=conf/default.conf
 $ kubectl apply -f yaml/nginx.yaml
 $ kubectl get svc
 NAME                             TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                       AGE
 my-nginx                         LoadBalancer   10.0.187.162   52.253.120.187   80:31131/TCP                  4m41s
+```
 
-NGINXのコンテナにssh
-$ kubectl exec -ti service/my-nginx -- bash
+3. IRISの疎通確認
 
+```
+$ curl http://52.253.120.187/api/monitor/metrics
+```
+
+4. NGINX経由でアクセス実行
+
+```
 $ curl http://52.253.120.187/   <= my-nginxのEXTERNAL-IP 
 <html><body>compute-0</body></html>
 $ curl -X POST http://52.253.120.187/
 <html><body>compute-1</body></html>
+```
 
-以下、nginxのログ出力。
+nginxのログ出力の確認を行います。
+
+```
 $ kubectl logs -f service/my-nginx
 
 10.224.0.6 - - [06/Sep/2023:02:45:01 +0000] "GET / HTTP/1.1" 200 36 "-" "curl/7.81.0" "-"
 10.224.0.5 - - [06/Sep/2023:02:45:13 +0000] "POST / HTTP/1.1" 200 36 "-" "curl/7.81.0" "-"
+```
 
-IRISの疎通確認
-$ curl http://52.253.120.187/api/monitor/metrics
+## 注意
 
+NGINXは起動時に解決したIPをttlに無関係に使い続けるそうです。
 
-注意
-NGINXのbackendとして指定しているホストのIPが変わると、下記エラーが発生します。
+https://qiita.com/kawakawaryuryu/items/af5dcb59aea1a10e4939
+
+そのため、NGINXのbackendとして指定しているホストのIPが変わると、下記エラーが発生します。
+
+```
 2023/09/06 08:40:16 [error] 21#21: *1047 connect() failed (113: No route to host) while connecting to upstream, client: 10.244.1.1, server: nginx, request: "POST /csp/myapp/test HTTP/1.1", upstream: "http://10.244.1.21:80/csp/myapp/test", host: "20.27.13.103"
 10.244.1.1 - appuser [06/Sep/2023:08:40:16 +0000] "POST /csp/myapp/test HTTP/1.1" 502 157 "-" "curl/7.81.0" "-"
+```
 
 プライマリのpodを2連続でdeleteするとこのような状況になります。(自動起動したprimaryのpodのIPが変わる)
-そのため、フェールオーバ時には応答が止まってしまいます。
+そのため、フェールオーバ時には応答が止まってしまい下記のエラーが発生します。
 
+```
 $ curl -X POST http://20.27.13.103/csp/myapp/test -u appuser:sys
 <html>
 <head><title>504 Gateway Time-out</title></head>
@@ -294,14 +378,22 @@ $ curl -X POST http://20.27.13.103/csp/myapp/test -u appuser:sys
 <hr><center>nginx/1.25.2</center>
 </body>
 </html>
+```
 
-NGINXは起動時に解決したIPをttlに無関係に使い続けるそうです。
-https://qiita.com/kawakawaryuryu/items/af5dcb59aea1a10e4939
+また、ちゃんとLoadBalancerとして機能させるためには、HealthCheckを指定URL(/csp/bin/mirror_status.cxw)で能動的にチェックしてくれる機能を持つバランサが要ります。
 
-ちゃんと機能させるためには、HealthCheckを指定URL(/csp/bin/mirror_status.cxw)で能動的にチェックしてくれる機能を持つバランサが要ります。
+```
 root@my-nginx-66dc48b8dc-848f4:/# curl http://iris-vs2021-data-0-0.iris-svc.default.svc.cluster.local/csp/bin/mirror_status.cxw
 SUCCESS
 root@my-nginx-66dc48b8dc-848f4:/# curl http://iris-vs2021-data-0-1.iris-svc.default.svc.cluster.local/csp/bin/mirror_status.cxw
 FAILED
+```
 
+# オプショナル
+
+[こちら](optional.txt)では、監視ツールを導入しています。実行してもしなくても良い内容です。
+
+実行すると、IKOを利用したプロビジョンを[Lens](https://k8slens.dev/)で表示するとこのようになります。
+![lens1](lens1.png)
+![lens2](lens2.png)
 

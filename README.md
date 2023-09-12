@@ -188,14 +188,18 @@ IKOを試される場合は、ご面倒ですが、Shard及びミラーが有効
 $ az login
 $ shell/aks-create-aks-cluster.sh
 ```
-> 数分程度、時間がかかります
+> 10分程度、時間がかかります
 
 ```bash
 $ kubectl get node
 NAME                                STATUS   ROLES   AGE     VERSION
-aks-nodepool1-71407409-vmss000000   Ready    agent   113s   v1.26.6
-aks-nodepool1-71407409-vmss000001   Ready    agent   118s   v1.26.6
-aks-nodepool1-71407409-vmss000002   Ready    agent   2m4s   v1.26.6
+aks-ingest-37009370-vmss000000      Ready    agent   4m44s   v1.26.6
+aks-iris-24535832-vmss000000        Ready    agent   10m     v1.26.6
+aks-iris-24535832-vmss000001        Ready    agent   11m     v1.26.6
+aks-iris-24535832-vmss000002        Ready    agent   11m     v1.26.6
+aks-nodepool1-12185897-vmss000000   Ready    agent   17m     v1.26.6
+aks-query-13338479-vmss000000       Ready    agent   2m44s   v1.26.6
+aks-ui-39448977-vmss000000          Ready    agent   6m37s   v1.26.6
 ```
 
 # Demo内容
@@ -204,13 +208,9 @@ aks-nodepool1-71407409-vmss000002   Ready    agent   2m4s   v1.26.6
 デモでは、下記を実行します。
 - バニラIRIS(Community Edition)をDeploymentとしてデプロイ(スタンドアロン構成)
 - バニラIRIS(Community Edition)をStatefulSetとしてデプロイ(スタンドアロン構成)
-- IKOのデプロイ
+- IKOのインストール
 - IKOを使用したバニラIRIS(製品版)のデプロイ(Mirror,ECP構成。WGWサイドカー,スタンドアロンWGW)
 - IKOを使用したユーザ作成イメージのデプロイ(Mirror,ECP構成。WGWサイドカー,スタンドアロンWGW)
-
-IKOを利用したデプロイを[Lens](https://k8slens.dev/)で表示するとこのようになります。
-![lens1](docs/lens1.png)
-![lens2](docs/lens2.png)
 
 # 削除
 ## Demo開始前の状態に戻す
