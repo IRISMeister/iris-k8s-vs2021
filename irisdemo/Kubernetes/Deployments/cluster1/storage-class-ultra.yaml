@@ -1,0 +1,22 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd-storage-class-normal
+provisioner: disk.csi.azure.com
+parameters:
+  skuname: Premium_LRS
+  kind: managed
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd-storage-class-fast
+provisioner: disk.csi.azure.com
+parameters:
+  skuname: UltraSSD_LRS
+  kind: managed
+  cachingMode: None
+  diskIopsReadWrite: "7000"  # burst *2  
+  diskMbpsReadWrite: "340"   # burst *2 
+volumeBindingMode: WaitForFirstConsumer

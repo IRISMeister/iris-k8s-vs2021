@@ -1,0 +1,17 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd-storage-class-normal
+provisioner: kubernetes.io/azure-disk
+parameters:
+  storageaccounttype: Premium_LRS
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd-storage-class-fast
+provisioner: kubernetes.io/azure-disk
+parameters:
+  storageaccounttype: Premium_LRS
+volumeBindingMode: WaitForFirstConsumer

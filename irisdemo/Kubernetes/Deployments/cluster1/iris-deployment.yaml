@@ -1,0 +1,78 @@
+apiVersion: intersystems.com/v1alpha1
+kind: IrisCluster
+metadata:
+  name: htapirisdb
+spec:
+  licenseKeySecret:
+    name: iris-key-secret
+  configSource:
+    name: iris-cpf
+  imagePullSecrets:
+    - name: dockerhub-secret
+  topology:
+    arbiter:
+      image: containers.intersystems.com/intersystems/arbiter:2023.2.0.227.0
+      podTemplate:
+        spec:
+          env:
+          - name: TZ
+            value: JST-9
+      preferredZones:
+        - japaneast-1
+    data:
+      mirrored: true
+      image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
+      compatibilityVersion: "2023.2.0"
+      updateStrategy:
+        type: RollingUpdate
+      preferredZones:
+        - japaneast-2
+        - japaneast-3
+      storageDB:
+        resources:
+          requests:
+            # PremiumSSD使用時, P6 - 240 IOPS、50 MB/秒 , バースト時 最大 3,500 IOPS、170 MB/秒まで最長 30 分間
+            storage: 64Gi
+            #storage: 500Gi
+        storageClassName: ssd-storage-class-fast
+      storageWIJ:
+        resources:
+          requests:
+            storage: 64Gi
+            #storage: 100Gi
+        storageClassName: ssd-storage-class-fast
+      storageJournal1:
+        resources:
+          requests:
+            storage: 64Gi
+            #storage: 1250Gi
+        storageClassName: ssd-storage-class-fast
+      storageJournal2:
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: ssd-storage-class-normal
+      webgateway:
+        image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
+        applicationPaths:
+        - /csp/sys
+        - /csp/broker
+        - /api
+        - /isc
+        - /oauth2
+        - /ui
+        loginSecret:
+          name: webgateway-secret
+      podTemplate:
+        spec:
+          nodeSelector:
+            speedtest/node-type: iris
+          resources:
+            requests:
+              cpu: 2
+              #cpu: 7
+          env:
+          - name: TZ
+            value: JST-9
+      
+      
