@@ -6,10 +6,14 @@ kubectl create secret generic dockerhub-secret \
     --type=kubernetes.io/dockerconfigjson
 
 # DATAノード、COMPUTEノード用のIRIS構成ファイルおよびWGWの構成ファイルを登録
-kubectl create cm iris-cpf --from-file cpf/CSP-merge.ini --from-file cpf/common.cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf
+# 独立したwebgateway使用中止
+#kubectl create cm iris-cpf --from-file cpf/CSP-merge.ini --from-file cpf/common.cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf
+kubectl create cm iris-cpf --from-file cpf/common.cpf --from-file cpf/data.cpf --from-file cpf/compute.cpf
 
 # ユーザ作成イメージ用を使用する場合に使用
-kubectl create cm iris-cpf-userimage --from-file cpf/CSP-merge.ini --from-file cpf/common.cpf --from-file cpf/userimage/data.cpf --from-file cpf/userimage/compute.cpf
+# 独立したwebgateway使用中止
+#kubectl create cm iris-cpf-userimage --from-file cpf/CSP-merge.ini --from-file cpf/common.cpf --from-file cpf/userimage/data.cpf --from-file cpf/userimage/compute.cpf
+kubectl create cm iris-cpf-userimage --from-file cpf/common.cpf --from-file cpf/userimage/data.cpf --from-file cpf/userimage/compute.cpf
 
 # For sidecar WGWs
 # ドキュメント誤り。Prefixは[[[ではなく]]]

@@ -40,7 +40,7 @@ No resources found in default namespace.
 ## 実行
 
 ```
-cd irisdemo/Kubernetes/Deployments/cluster1
+cd aks
 ./start-speedtest.sh
 ```
 

@@ -203,7 +203,7 @@ aks-ui-39448977-vmss000000          Ready    agent   6m37s   v1.26.6
 ```
 
 # Demo内容
-[demo.txt](docs/demo.txt)を参照ください。
+[demo.md](docs/demo.md)を参照ください。
 
 デモでは、下記を実行します。
 - バニラIRIS(Community Edition)をDeploymentとしてデプロイ(スタンドアロン構成)
@@ -219,6 +219,11 @@ aks-ui-39448977-vmss000000          Ready    agent   6m37s   v1.26.6
 shell/reset-to-next-demo.sh
 ```
 > 再度Demo.txtの操作を行った場合、イメージがK8s環境にpullされているので、初回に比べてPODの起動が早くなります。
+
+# SpeedTest
+
+[SpeedTest](https://github.com/intersystems-community/irisdemo-demo-htap)をAKSで稼働させることが出来ます。手順は[こちら](./speedtest/README.md)です。
+
 
 ## AKSクラスタを完全に削除
 AKSクラスタを完全に削除するには下記を実行してください。

@@ -10,15 +10,6 @@ spec:
   imagePullSecrets:
     - name: dockerhub-secret
   storageClassName: iris-ssd-storageclass
-  volumeClaimTemplates:
-    - metadata:
-        name: extra-disk
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 5Gi
   updateStrategy:
     type: RollingUpdate
   serviceTemplate:
@@ -28,8 +19,15 @@ spec:
   topology:
     arbiter:
       image: containers.intersystems.com/intersystems/arbiter:2023.2.0.227.0
+      podTemplate:
+        spec:
+          nodeSelector:
+            speedtest/node-type: iris-arbiter
+          env:
+          - name: TZ
+            value: JST-9
       preferredZones:
-        - japaneast-1
+        - japaneast-3
     data:
       #shards: 1
       mirrored: true
@@ -37,10 +35,14 @@ spec:
       compatibilityVersion: "2023.2.0"
       podTemplate:
         spec:
-          args: 
+          nodeSelector:
+            speedtest/node-type: iris
+          env:
+          - name: TZ
+            value: JST-9
       preferredZones:
+        - japaneast-1
         - japaneast-2
-        - japaneast-3
       storageDB:
         resources:
           requests:
@@ -63,7 +65,11 @@ spec:
       compatibilityVersion: "2023.2.0"
       podTemplate:
         spec:
-          args: 
+          nodeSelector:
+            speedtest/node-type: iris
+          env:
+          - name: TZ
+            value: JST-9
       replicas: 2
       webgateway:
         image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
@@ -82,6 +88,11 @@ spec:
     webgateway:
       replicas: 1
       image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
+      podTemplate:
+        spec:
+          env:
+          - name: TZ
+            value: JST-9
       applicationPaths:
         #; All of the IRIS instance's system default applications.
         #; For Management Portal only, just use '/csp/sys'.

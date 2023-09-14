@@ -26,8 +26,9 @@ spec:
           env:
           - name: TZ
             value: JST-9
-      preferredZones:
-        - japaneast-3
+      #preferredZones:
+        #- ap-northeast-1d
+        #- ap-northeast-1d
     data:
       #shards: 1
       mirrored: true
@@ -41,8 +42,8 @@ spec:
           - name: TZ
             value: JST-9
       preferredZones:
-        - japaneast-1
-        - japaneast-2
+        - ap-northeast-1a
+        - ap-northeast-1c
       storageDB:
         resources:
           requests:

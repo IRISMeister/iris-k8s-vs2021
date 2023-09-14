@@ -6,7 +6,7 @@ spec:
   licenseKeySecret:
     name: iris-key-secret
   configSource:
-    name: iris-cpf
+    name: iris-cpf-speedtest
   imagePullSecrets:
     - name: dockerhub-secret
   topology:
@@ -14,20 +14,33 @@ spec:
       image: containers.intersystems.com/intersystems/arbiter:2023.2.0.227.0
       podTemplate:
         spec:
+          nodeSelector:
+            speedtest/node-type: iris-arbiter
           env:
           - name: TZ
             value: JST-9
       preferredZones:
-        - japaneast-1
+        - japaneast-3
     data:
       mirrored: true
       image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
       compatibilityVersion: "2023.2.0"
       updateStrategy:
         type: RollingUpdate
+      podTemplate:
+        spec:
+          nodeSelector:
+            speedtest/node-type: iris
+          resources:
+            requests:
+              cpu: 3
+              #cpu: 4 # cause not available with 4 vcpus VM
+          env:
+          - name: TZ
+            value: JST-9
       preferredZones:
+        - japaneast-1
         - japaneast-2
-        - japaneast-3
       storageDB:
         resources:
           requests:
@@ -63,16 +76,5 @@ spec:
         - /ui
         loginSecret:
           name: webgateway-secret
-      podTemplate:
-        spec:
-          nodeSelector:
-            speedtest/node-type: iris
-          resources:
-            requests:
-              cpu: 2
-              #cpu: 7
-          env:
-          - name: TZ
-            value: JST-9
       
       

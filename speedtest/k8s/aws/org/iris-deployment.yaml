@@ -1,0 +1,51 @@
+apiVersion: intersystems.com/v1alpha1
+kind: IrisCluster
+metadata:
+  name: htapirisdb
+spec:
+  passwordHash: '071e3aa0c8810f91eefd8f074e3768b06c66308a,v7mf8dt5'
+  licenseKeySecret:
+    name: iris-key-secret
+  configSource:
+    name: iris-cpf
+  imagePullSecrets:
+    - name: dockerhub-secret
+  topology:
+    data:
+      mirrored: true
+      image: angellopezque/iko:iris-2021.1.0XDBC.148.1
+      updateStrategy:
+        type: RollingUpdate
+      preferredZones:
+        - us-east-2a
+        - us-east-2b
+        - us-east-2c
+      storageDB:
+        resources:
+          requests:
+            storage: 500Gi
+        storageClassName: ssd-storage-class-normal
+      storageWIJ:
+        resources:
+          requests:
+            storage: 100Gi
+        storageClassName: ssd-storage-class-fast
+      storageJournal1:
+        resources:
+          requests:
+            storage: 1250Gi
+        storageClassName: ssd-storage-class-slow
+      storageJournal2:
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: ssd-storage-class-slow
+      podTemplate:
+        spec:
+          nodeSelector:
+            speedtest/node-type: iris
+          resources:
+            requests:
+              cpu: 7
+      
+      

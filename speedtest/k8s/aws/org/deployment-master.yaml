@@ -31,7 +31,7 @@ spec:
         speedtest/node-type: master-ui
       containers:
       - name: master-container
-        image: intersystemsdc/irisdemo-demo-htap:master-version-2.8.5
+        image: intersystemsdc/irisdemo-demo-htap:master-version-2.5.3
         resources:
           requests:
               cpu: 1
@@ -48,8 +48,7 @@ spec:
         - name: DISABLE_JOURNAL_FOR_TRUNCATE_TABLE
           value: "true"
         - name: INGESTION_THREADS_PER_WORKER
-          value: "2"
-          #value: "15"
+          value: "15"
         - name: INGESTION_BATCH_SIZE
           value: "1000"
         - name: INGESTION_JDBC_URL
@@ -57,18 +56,16 @@ spec:
         - name: INGESTION_JDBC_USERNAME
           value: "SuperUser"
         - name: INGESTION_JDBC_PASSWORD
-          value: "SYS"
+          value: "sys"
         - name: CONSUMER_JDBC_URL
           value: "jdbc:IRIS://htapirisdb:1972/IRISCLUSTER"
         - name: CONSUMER_JDBC_USERNAME
           value: "SuperUser"
         - name: CONSUMER_JDBC_PASSWORD
-          value: "SYS"
+          value: "sys"
         - name: CONSUMER_THREADS_PER_WORKER
-          value: "2"
-          #value: "10"
+          value: "10"
         - name: CONSUMER_TIME_BETWEEN_QUERIES_IN_MILLIS
           value: "0"
         - name: DATABASE_SIZE_IN_GB
-          value: "5"
-          #value: "500"
+          value: "500"
