@@ -1,0 +1,38 @@
+$ eksctl create cluster -f ./cluster-config.yaml
+$ kubectl apply -f ./iris-ssd-sc-aws.yaml
+$ kubectl apply -f ./ebs-dynamic-pvc.yaml
+$ kubectl apply -f ./test-pod.yaml
+
+
+$ eksctl delete cluster -f ./cluster-config.yaml --disable-nodegroup-eviction
+
+> --disable-nodegroup-evictionがないとcsi driverが邪魔してクラスタ削除が完了しない
+
+当初、ストレージの動的プロビジョニングが動作しなかった際の対処。
+https://stackoverflow.com/questions/75758115/persistentvolumeclaim-is-stuck-waiting-for-a-volume-to-be-created-either-by-ex
+
+eksctl utils associate-iam-oidc-provider --region=ap-northeast-1 --cluster=c3 --approve
+eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster c3 \
+    --role-name AmazonEKS_EBS_CSI_DriverRole \
+    --role-only \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --approve
+eksctl create addon --name aws-ebs-csi-driver --cluster c3 --service-account-role-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/AmazonEKS_EBS_CSI_DriverRole --force
+
+  あるいは 
+
+iam:
+  withOIDC: true
+addons:
+- name: aws-ebs-csi-driver
+  attachPolicyARNs:
+  - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+
+
+
+
+
+

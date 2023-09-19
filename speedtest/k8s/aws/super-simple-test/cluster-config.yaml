@@ -1,0 +1,20 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: sample-cluster
+  region: ap-northeast-1
+  version: "1.27"
+# see https://eksctl.io/usage/addons/
+iam:
+  withOIDC: true
+addons:
+- name: aws-ebs-csi-driver
+  attachPolicyARNs:
+  - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+availabilityZones: ["ap-northeast-1a", "ap-northeast-1c", "ap-northeast-1d"]
+nodeGroups:
+  - name: n1
+    instanceType: m5.xlarge
+    minSize: 1
+    maxSize: 1
+    desiredCapacity: 1

@@ -6,7 +6,7 @@ services:
   simple-server:
     build:
       context: ./python
-    image: dpmeister/irisdemo:simple-server-wip
+    image: dpmeister/irisdemo:simple-server
     init: true
     ports:
     - "8080:80"

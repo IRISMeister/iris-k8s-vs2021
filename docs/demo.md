@@ -44,24 +44,60 @@ kubectl delete pvc -l app=my-iris
 
 ```
 shell/prep-iris-cluster.sh
-helm install intersystems chart/iris-operator --wait
+helm install intersystems chart/iris-operator --set nodeSelector.agentpool=nodepool1 --wait
 ```
+
+> IRIS稼働ノードとの同居を避けるために、特定のノードプールにプロビジョンしています。
 
 ## IKOを使用したIRISのプロビジョン
 
 ```
-kubectl apply -f yaml/iris-iko.yaml
-kubectl get statefulset -o wide
-kubectl get iriscluster   (runningを確認)
-kubectl get pvc
-kubectl get svc
+$ kubectl apply -f yaml/iris-iko.yaml
+$ kubectl get pod
+NAME                                              READY   STATUS    RESTARTS   AGE
+intersystems-iris-operator-amd-59fb7c65c7-h47xp   1/1     Running   0          35m
+iris-vs2021-arbiter-0                             1/1     Running   0          3m3s
+iris-vs2021-compute-0                             2/2     Running   0          113s
+iris-vs2021-compute-1                             2/2     Running   0          82s
+iris-vs2021-data-0-0                              2/2     Running   0          2m53s
+iris-vs2021-data-0-1                              2/2     Running   0          2m22s
+
+$ kubectl get svc
+NAME                             TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                      AGE
+intersystems-iris-operator-amd   ClusterIP      10.0.76.175   <none>           443/TCP                       35m
+iris-svc                         ClusterIP      None          <none>           <none>                        3m
+iris-vs2021                      LoadBalancer   10.0.36.165   52.253.120.229   1972:31723/TCP,80:30960/TCP   3m
+kubernetes                       ClusterIP      10.0.0.1      <none>           443/TCP                       67m
 ```
 
 管理ポータルへのアクセス
 
-  http://EXTERNAL:52773/csp/sys/%25CSP.Portal.Home.zen
 
-  ミラーモニタで、ミラー名がIRISMIRROR1であること、メンバIRIS-VS2021-DATA-0-0がプライマリであることを確認
+```
+  serviceTemplate:
+    spec:
+      type: LoadBalancer
+```
+iris-iko.yamlにおいて上記の設定を行っています。その結果、LoadBalancerがプロビジョンされます。具体的には下記の設定になっており、現在プライマリになっているdataノードにアクセスします。
+
+```
+$  kubectl get svc iris-vs2021 -o yaml
+
+  selector:
+    intersystems.com/component: data
+    intersystems.com/kind: IrisCluster
+    intersystems.com/mirrorRole: primary
+```
+
+http://EXTERNAL-IP/csp/sys/%25CSP.Portal.Home.zen
+
+ミラーモニタで、ミラー名がIRISMIRROR1であること、メンバIRIS-VS2021-DATA-0-0がプライマリであることを確認
+
+> ECP環境において、直接dataノードに到達するようなサービスは不要かもしれません。
+
+> computeノードの管理ポータルへのアクセスにはsidecarのWGWを使用します。
+
+> (ラウンドロビンなど何某かのルールに基づいた)ロードバランサ経由でのcomputeノード群へのアクセスは別途、設定が必要になります。
 
 ## 操作
 
@@ -133,7 +169,7 @@ IRISCLUSTER>h
 
 ## 各IRISインスタンスの管理ポータルへのアクセス方法
 
-製品版なので、SideCarとしてWGWを稼働させています。
+製品版なので、SideCarとして稼働させているWGW経由でアクセスします。
 
 ```
 kubectl port-forward iris-vs2021-data-0-0 9999:80
@@ -251,11 +287,6 @@ $ curl -s -u appuser:sys http://$extip/csp/myapp/test
 kubectl delete -f yaml/iris-iko-userimage.yaml
 kubectl delete pvc -l intersystems.com/name=iris-vs2021
 ```
-
-# SpeedTest
-
-[SpeedTest](https://github.com/intersystems-community/irisdemo-demo-htap)をAKSで稼働させることが出来ます。手順は[こちら](../irisdemo/README.md)です。
-
 
 # **** ここから先は、実験中です ****
 

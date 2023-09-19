@@ -1,21 +1,14 @@
 apiVersion: intersystems.com/v1alpha1
 kind: IrisCluster
 metadata:
-  name: iris-vs2021
+  name: htapirisdb
 spec:
   licenseKeySecret:
     name: iris-key-secret
   configSource:
-    name: iris-cpf
+    name: iris-cpf-speedtest
   imagePullSecrets:
     - name: dockerhub-secret
-  storageClassName: iris-ssd-storageclass
-  updateStrategy:
-    type: RollingUpdate
-  serviceTemplate:
-    spec:
-      type: LoadBalancer
-
   topology:
     arbiter:
       image: containers.intersystems.com/intersystems/arbiter:2023.2.0.227.0
@@ -26,18 +19,22 @@ spec:
           env:
           - name: TZ
             value: JST-9
-      #preferredZones:
-        #- ap-northeast-1d
-        #- ap-northeast-1d
+      preferredZones:
+        - ap-northeast-1d
     data:
-      #shards: 1
       mirrored: true
       image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
       compatibilityVersion: "2023.2.0"
+      updateStrategy:
+        type: RollingUpdate
       podTemplate:
         spec:
           nodeSelector:
             speedtest/node-type: iris
+          resources:
+            requests:
+              cpu: 3
+              #cpu: 4 # cause not available with 4 vcpus VM
           env:
           - name: TZ
             value: JST-9
@@ -47,7 +44,27 @@ spec:
       storageDB:
         resources:
           requests:
-            storage: 5Gi
+            # PremiumSSD使用時, P6 - 240 IOPS、50 MB/秒 , バースト時 最大 3,500 IOPS、170 MB/秒まで最長 30 分間
+            storage: 64Gi
+            #storage: 500Gi
+        storageClassName: ssd-storage-class-fast
+      storageWIJ:
+        resources:
+          requests:
+            storage: 64Gi
+            #storage: 100Gi
+        storageClassName: ssd-storage-class-fast
+      storageJournal1:
+        resources:
+          requests:
+            storage: 64Gi
+            #storage: 1250Gi
+        storageClassName: ssd-storage-class-fast
+      storageJournal2:
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: ssd-storage-class-normal
       # see https://github.com/intersystems-community/webgateway-examples/tree/master/demo-compose
       webgateway:
         image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
@@ -60,27 +77,3 @@ spec:
         - /ui
         loginSecret:
           name: webgateway-secret
-
-    compute:
-      image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
-      compatibilityVersion: "2023.2.0"
-      podTemplate:
-        spec:
-          nodeSelector:
-            speedtest/node-type: iris
-          env:
-          - name: TZ
-            value: JST-9
-      replicas: 2
-      webgateway:
-        image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
-        applicationPaths:
-        - /csp/sys
-        - /csp/broker
-        - /api
-        - /isc
-        - /oauth2
-        - /ui
-        loginSecret:
-          name: webgateway-secret
-

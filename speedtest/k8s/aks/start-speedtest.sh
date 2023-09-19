@@ -1,4 +1,3 @@
-#source ./envar.sh
 source ../utils.sh
 source ../../../shell/envs.sh
 

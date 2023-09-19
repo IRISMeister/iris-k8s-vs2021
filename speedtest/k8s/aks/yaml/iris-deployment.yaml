@@ -65,6 +65,7 @@ spec:
           requests:
             storage: 10Gi
         storageClassName: ssd-storage-class-normal
+      # see https://github.com/intersystems-community/webgateway-examples/tree/master/demo-compose
       webgateway:
         image: containers.intersystems.com/intersystems/webgateway:2023.2.0.227.0
         applicationPaths:
@@ -76,5 +77,3 @@ spec:
         - /ui
         loginSecret:
           name: webgateway-secret
-      
-      
