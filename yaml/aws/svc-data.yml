@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: iris-data
+spec:
+  selector:
+    intersystems.com/component: data
+    intersystems.com/kind: IrisCluster
+    intersystems.com/mirrorRole: primary
+    intersystems.com/name: iris-vs2021
+    intersystems.com/role: iris
+    intersystems.com/shard: "0"
+  ports:
+  - name: superserver
+    port: 1972
+    protocol: TCP
+    targetPort: superserver
+  - name: webserver
+    port: 80
+    protocol: TCP
+    targetPort: webserver
+  type: LoadBalancer
+
+

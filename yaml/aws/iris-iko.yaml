@@ -24,7 +24,7 @@ spec:
           - name: TZ
             value: JST-9
       preferredZones:
-        - japaneast-3
+        - ap-northeast-1d
     data:
       mirrored: true
       image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
@@ -37,8 +37,8 @@ spec:
           - name: TZ
             value: JST-9
       preferredZones:
-        - japaneast-1
-        - japaneast-2
+        - ap-northeast-1a
+        - ap-northeast-1c
       storageDB:
         resources:
           requests:

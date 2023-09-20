@@ -66,38 +66,9 @@ $ kubectl get svc
 NAME                             TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                      AGE
 intersystems-iris-operator-amd   ClusterIP      10.0.76.175   <none>           443/TCP                       35m
 iris-svc                         ClusterIP      None          <none>           <none>                        3m
-iris-vs2021                      LoadBalancer   10.0.36.165   52.253.120.229   1972:31723/TCP,80:30960/TCP   3m
+iris-vs2021                      ClusterIP      10.0.36.165   <none>           1972:31723/TCP,80:30960/TCP   3m
 kubernetes                       ClusterIP      10.0.0.1      <none>           443/TCP                       67m
 ```
-
-管理ポータルへのアクセス
-
-
-```
-  serviceTemplate:
-    spec:
-      type: LoadBalancer
-```
-iris-iko.yamlにおいて上記の設定を行っています。その結果、LoadBalancerがプロビジョンされます。具体的には下記の設定になっており、現在プライマリになっているdataノードにアクセスします。
-
-```
-$  kubectl get svc iris-vs2021 -o yaml
-
-  selector:
-    intersystems.com/component: data
-    intersystems.com/kind: IrisCluster
-    intersystems.com/mirrorRole: primary
-```
-
-http://EXTERNAL-IP/csp/sys/%25CSP.Portal.Home.zen
-
-ミラーモニタで、ミラー名がIRISMIRROR1であること、メンバIRIS-VS2021-DATA-0-0がプライマリであることを確認
-
-> ECP環境において、直接dataノードに到達するようなサービスは不要かもしれません。
-
-> computeノードの管理ポータルへのアクセスにはsidecarのWGWを使用します。
-
-> (ラウンドロビンなど何某かのルールに基づいた)ロードバランサ経由でのcomputeノード群へのアクセスは別途、設定が必要になります。
 
 ## 操作
 
@@ -173,14 +144,44 @@ IRISCLUSTER>h
 
 ```
 kubectl port-forward iris-vs2021-data-0-0 9999:80
-あるいは
 kubectl port-forward iris-vs2021-compute-0 9999:80
+など
 ```
 
 CSP管理画面は[http://localhost:9999/csp/bin/Systems/Module.cxw](http://localhost:9999/csp/bin/Systems/Module.cxw)
 
 管理ポータルは、[http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen](http://localhost:9999/csp/sys/%25CSP.Portal.Home.zen)
 
+
+## クラスタ外部からのアプリケーションによるアクセス
+
+外部からのアクセスを行うには、下記のようにサービスを使用します。その際、下記で得られるラベル(intersystems.com/component=dataなど)を利用してselectorで接続先を指定します。
+```
+$ kubectl get pod --show-labels
+```
+
+### dataノード(primary)へのアクセス
+
+```
+$ kubectl apply -f ./svc-data.yml
+$ kubectl get svc
+```
+http://EXTERNAL-IP/csp/sys/%25CSP.Portal.Home.zen
+
+ミラーモニタで、ミラー名がIRISMIRROR1であること、メンバIRIS-VS2021-DATA-0-0がプライマリであることを確認してください。
+
+> ECP環境において、直接dataノードに到達するようなサービスは不要かもしれません。
+
+### computeノードへのアクセス
+
+computeノードは複数存在するため、何某かのルール(ラウンドロビン等)でアクセス先のノードが決まります。そのため、ステートフルアプリケーションである管理ポータルは正常に動作しません。
+
+ユーザ作成のコンテナイメージを利用する場合に有効なエンドポイントを使用して動作を確認します。
+
+```
+$ kubectl apply -f ./svc-compute.yml
+$ kubectl get svc
+```
 
 ## IRISクラスタの削除およびPVの削除
 
