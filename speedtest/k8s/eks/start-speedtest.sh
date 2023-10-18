@@ -6,7 +6,6 @@ eksctl create cluster -f ./yaml/cluster-config.yaml
 # 自動で行われる模様
 # aws eks update-kubeconfig --region ap-northeast-1 --name speedtest-cluster
 
-
 pushd ../../../
 ./shell/prep-iris-cluster.sh
 helm install intersystems chart/iris-operator --wait
@@ -15,13 +14,15 @@ popd
 # speedtest用のcpf
 kubectl create cm iris-cpf-speedtest --from-file ../cpf/data.cpf
 
-# (一時的な措置)azure用のSCを削除
+# スクリプトを共有している関係で出来上がっている不要なAzure用のSC(当然EKSでは機能しない)を削除
 kubectl delete -f ../../../yaml/iris-ssd-sc-aks.yaml
 # Speedtest用のSC
 kubectl apply -f ./yaml/storage-class.yaml
 
-
-kubectl apply -f ../yaml/deployment-master.yaml
+# 以下の差異があるため、deployment-master.yamlはEFS専用(正確にはミラー未使用時専用)を用意した。
+# ミラー使用時(IRISCLUSTER)とはネームスペースが異なる(USER)
+# EFSではDATABASE_SIZE_IN_GBが15GBだとタイムアウトするため1GBに修正。
+kubectl apply -f ./yaml/deployment-master.yaml
 exit_if_error "Could not deploy master"
 kubectl apply -f ../yaml/deployment-ui.yaml
 exit_if_error "Could not deploy the ui"

@@ -1,6 +1,9 @@
 #!/bin/bash
 source shell/envs.sh
 
+# Docker Desktop(Windows)をインストールすると、config.jsonに下記のエントリが出来て、pullが認証エラーになるという障害あり。
+# "credsStore": "desktop.exe"
+# 対処療法は、"_credsStore": "desktop.exe"に書き換えて、docker loginしなおす。--> "credsStore"が消える。
 kubectl create secret generic dockerhub-secret \
     --from-file=.dockerconfigjson=$HOME/.docker/config.json \
     --type=kubernetes.io/dockerconfigjson

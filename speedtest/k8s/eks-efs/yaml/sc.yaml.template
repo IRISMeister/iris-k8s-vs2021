@@ -1,0 +1,16 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: {{fileSystemId}}
+  directoryPerms: "777"
+  uid: "51773"
+  gid: "51773"
+
+# for dynamic provisioning
+# see 
+# https://aws.amazon.com/jp/blogs/news/amazon-efs-csi-dynamic-provisioning/
+# https://github.com/kubernetes-sigs/aws-efs-csi-driver

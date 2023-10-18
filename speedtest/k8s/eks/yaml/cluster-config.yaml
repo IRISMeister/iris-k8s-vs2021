@@ -11,6 +11,10 @@ addons:
 - name: aws-ebs-csi-driver
   attachPolicyARNs:
   - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+# if you need efs 
+- name: aws-efs-csi-driver
+  attachPolicyARNs:
+  - arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy
 availabilityZones: ["ap-northeast-1a", "ap-northeast-1c", "ap-northeast-1d"]
 nodeGroups:
   - name: arbiter-node

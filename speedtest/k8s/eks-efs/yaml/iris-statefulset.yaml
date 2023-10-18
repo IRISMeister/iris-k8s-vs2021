@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: htapirisdb
+  labels:
+    app: my-iris-svc
+spec:
+  ports:
+  - port: 52773
+    targetPort: 52773
+    protocol: TCP
+    name: http
+  - port: 1972
+    targetPort: 1972
+    protocol: TCP
+    name: ss
+  selector:
+    app: my-iris
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: htapirisdb
+spec:
+  selector:
+    matchLabels:
+      app: my-iris # .spec.template.metadata.labelsの値と一致する必要があります
+  serviceName: "my-iris"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: my-iris # .spec.selector.matchLabelsの値と一致する必要があります
+    spec:
+      securityContext: 
+        fsGroup: 51773
+      terminationGracePeriodSeconds: 10
+      nodeSelector:
+        speedtest/node-type: iris
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: my-iris
+        image: containers.intersystems.com/intersystems/iris:2023.2.0.227.0
+        args: 
+        - "--key /isc/iris.key"
+        ports:
+        - containerPort: 1972
+        - containerPort: 52773
+        env:
+        - name: ISC_CPF_MERGE_FILE
+          value: /irissys/cpf/data.cpf
+        - name: ISC_DATA_DIRECTORY
+          value: /external/iris
+        - name: TZ
+          value: JST-9
+        volumeMounts:
+        - mountPath: /irissys/cpf/
+          name: cpf-merge
+        - mountPath: /isc/
+          name: iris-key
+        - mountPath: /external
+          name: efs-claim
+      volumes:
+      - name: cpf-merge
+        configMap:
+          name: iris-cpf-speedtest
+          defaultMode: 420
+      - name: iris-key
+        secret:
+          secretName: iris-key-secret
+          defaultMode: 420
+      #- configMap:
+      #    defaultMode: 420
+          #name: iris-cpf
+      #    name: iris-cpf-speedtest
+      #  name: cpf-merge
+        #  defaultMode: 420
+        #  name: iris-key-secret
+        #name: iris-key
+  volumeClaimTemplates:
+  - metadata:
+      name: efs-claim
+    spec:
+      #accessModes: [ "ReadWriteOnce" ]
+      accessModes: [ "ReadWriteOncePod" ]
+      storageClassName: efs-sc
+      resources:
+        requests:
+          storage: 128Gi

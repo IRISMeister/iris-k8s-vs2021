@@ -5,3 +5,6 @@ iris.key
 chart.old/
 *.tar.gz
 iris_operator*
+subnets.json
+speedtest/k8s/eks-efs/yaml/sc.yaml
+speedtest/k8s/eks-efs/param.txt
