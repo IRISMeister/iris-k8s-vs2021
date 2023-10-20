@@ -53,6 +53,7 @@ spec:
           name: iris-key
         - mountPath: /external
           name: efs-claim
+      # webgateway(sidecar)のsecret指定方法が不明。自前でcmを作成する必要がありそう。see ../eks/export/cm-htapirisdb-data-0.yml
       volumes:
       - name: cpf-merge
         configMap:
