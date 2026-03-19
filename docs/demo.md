@@ -4,12 +4,50 @@ README.mdの[AKSクラスタの作成]まで完了している事
 # Pod起動
 
 ```
-kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2023.2.0.227.0 --
+kubectl run iris --image=containers.intersystems.com/intersystems/iris-community:2025.1 --
 kubectl describe pod iris
 kubectl logs iris
 kubectl exec -ti iris -- bash
 kubectl exec -ti iris -- iris session iris
 kubectl delete pod iris
+```
+# Deployment起動
+
+製品版のIRISの起動。
+
+```
+# docker loginに使用するクレデンシャルの作成
+kubectl create secret generic dockerhub-secret \
+    --from-file=.dockerconfigjson=$HOME/.docker/config.json \
+    --type=kubernetes.io/dockerconfigjson
+
+kubectl apply -f yaml/iris-deploy.yaml
+kubectl get pod
+POD名を取得。
+kubectl exec -ti iris-deployment-xxxxxx -- bash
+```
+
+iris.keyを配置する必要があります。ひとまず手作業で配置しています。
+```
+cat << EOF > iris.key
+[ConfigFile]
+FileType=InterSystems License Rev-A.1
+LicenseID=xxxx
+        ・
+[License]
+LicenseCapacity=InterSystems IRIS Advanced Server 2025.3, Server:4, Core Capacity, Container(Ubuntu-x64)
+        ・
+        ・
+EOF
+
+cp iris.key /usr/irissys/mgr/
+iris restart iris
+```
+
+```
+$ iris session iris
+USER>
+kubectl delete -f yaml/iris-deploy.yaml
 ```
 
 # StatefulSet起動
@@ -17,7 +55,7 @@ kubectl delete pod iris
 ```
 kubectl apply -f yaml/iris-ssd-sc-aks.yaml
 kubectl apply -f yaml/iris-configmap-cpf.yaml
-kubectl apply -f yaml/iris-statefulset.yml
+kubectl apply -f yaml/iris-statefulset.yaml
 kubectl exec -ti iris-0 -- iris session iris
 kubectl get svc
   NAME      TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)           AGE
@@ -32,8 +70,8 @@ kubectl get svc
 ymlを修正し、適用することで、IRISインスタンスを増やすことができます。
 ```
 replicas: 1->2
-kubectl apply -f yaml/iris-statefulset.yml
-kubectl delete -f yaml/iris-statefulset.yml
+kubectl apply -f yaml/iris-statefulset.yaml
+kubectl delete -f yaml/iris-statefulset.yaml
 kubectl get pvc
 kubectl delete pvc -l app=my-iris
 ```

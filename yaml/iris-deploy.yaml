@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iris-deployment
+  labels:
+    app: iris-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iris-pod
+  template:
+    metadata:
+      labels:
+        app: iris-pod
+    spec:
+      nodeSelector:
+        speedtest/node-type: iris
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: iris-container
+        #image: containers.intersystems.com/intersystems/iris-community:2025.1
+        image: containers.intersystems.com/intersystems/iris:2025.1
+        resources:
+          requests:
+              cpu: "1"
+              memory: 64M
+          limits:
+              cpu: "1"
+              #memory: 128M #適切な値が見つからないのでひとまずコメントアウト
+        ports:
+        - containerPort: 1972
